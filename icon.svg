@@ -1,7 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BodyTrack">
-  <defs><linearGradient id="blush" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7dce5"/><stop offset="1" stop-color="#fff7f8"/></linearGradient></defs>
-  <rect width="512" height="512" rx="112" fill="url(#blush)"/>
-  <rect x="30" y="30" width="452" height="452" rx="96" fill="none" stroke="#ecc5d3" stroke-width="8"/>
-  <path d="M74 269h97l45-93 75 169 49-90h98" fill="none" stroke="#ac3e66" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="397" cy="255" r="13" fill="#80c7af"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">BodyTrack</title>
+  <desc id="desc">Cuore bianco con linea del battito su sfondo rosa cipria.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c96e91"/>
+      <stop offset=".58" stop-color="#ae486e"/>
+      <stop offset="1" stop-color="#8c3458"/>
+    </linearGradient>
+    <linearGradient id="heart" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffdfd"/>
+      <stop offset="1" stop-color="#ffeaf2"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+  <circle cx="106" cy="76" r="165" fill="#ffffff" opacity=".08"/>
+  <circle cx="480" cy="480" r="190" fill="#6b2143" opacity=".11"/>
+  <rect x="26" y="26" width="460" height="460" rx="100" fill="none" stroke="#ffffff" stroke-opacity=".24" stroke-width="5"/>
+  <g transform="translate(88 92) scale(14)" fill="none" stroke="url(#heart)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.8 5.6a5.4 5.4 0 0 0-7.6 0L12 6.8l-1.2-1.2a5.4 5.4 0 0 0-7.6 7.6L12 22l8.8-8.8a5.4 5.4 0 0 0 0-7.6Z"/>
+    <path d="M4.5 12h4l1.5-2.5 3 5 1.5-2.5h5"/>
+  </g>
 </svg>
