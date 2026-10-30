@@ -1,6 +1,15 @@
-# BodyTrack 1.5 — Wellness Redesign
+# BodyTrack 1.6 — Mobile UX
 
 PWA mobile-first, con grafica rosa cipria completamente rinnovata, per calcolare BMI, stima della composizione corporea, rapporto vita/altezza e tenere uno storico **solo delle misurazioni archiviate esplicitamente**.
+
+## Uso su iPhone e feedback (v1.6)
+
+- Tastiera numerica/decimale con dimensione carattere adatta a Safari (senza zoom automatico), indicazioni `Avanti/Fine` e passaggio tra i campi numerici.
+- Barra di navigazione inferiore nascosta mentre si digita su un dispositivo touch; una barra compatta **Precedente · Successivo · Fine** compare sopra la tastiera e il campo attivo viene portato in vista.
+- Notifiche discrete integrate nell'app per salvataggio, annullamento, eliminazione, esportazione, importazione ed errori di validazione. Le notifiche possono essere chiuse manualmente e scompaiono automaticamente.
+- Conferme personalizzate e accessibili per **eliminare** una misurazione o **sostituire** l'archivio tramite importazione. Il pulsante Annulla non cambia alcun dato.
+- Validazione guidata: quando un dato non è valido, l'app mostra un messaggio e porta al campo da correggere.
+- Rimane obbligatoria la scelta **Archivia / Non archiviare** dopo il calcolo. Nessun cambiamento alle formule o alla chiave locale `bodytrack_v1`.
 
 ## Design e navigazione (v1.5)
 
