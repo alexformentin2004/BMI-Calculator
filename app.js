@@ -153,7 +153,14 @@ function result(){
     '<button type="button" class="text-link revise" data-action="revise">Modifica i dati inseriti</button></div>'+
     '<section class="panel"><h3>Dettaglio delle misure</h3><div class="measurement-detail-grid">'+measured+'</div>'+precision+
     '<p class="note">L’età non modifica le formule. Le percentuali non sono misure cliniche; anche con tre letture resta un margine d’errore del metodo.</p></section>'+
-    bmiPanel(e,c)+'<p class="note">La massa magra comprende anche acqua, ossa e organi. Il BMI non distingue muscoli e grasso: i range di peso non sono prescrizioni individuali.</p>');
+    bmiPanel(e,c)+
+    '<details class="calc-details"><summary>Come vengono calcolati i risultati?</summary>'+
+    '<p><strong>BMI:</strong> peso in kg diviso altezza in metri al quadrato.</p>'+
+    '<p><strong>Massa grassa:</strong> stima US Navy da altezza, collo e '+(male?'addome all’ombelico.':'vita e fianchi.')+'</p>'+
+    '<p><strong>Massa magra:</strong> peso meno massa grassa stimata; non è la sola massa muscolare.</p>'+
+    '<p><strong>Vita/altezza:</strong> circonferenza vita divisa per altezza, nelle stesse unità. Un rapporto inferiore a 0,50 è un riferimento generale, non una diagnosi.</p>'+
+    '<p><strong>Età:</strong> registrata per il contesto, senza influenzare i calcoli BMI o US Navy.</p></details>'+
+    '<p class="note">La massa magra comprende anche acqua, ossa e organi. Il BMI non distingue muscoli e grasso: i range di peso non sono prescrizioni individuali.</p>');
 }
 function guide(){
   shell('<div class="small">GUIDA VISIVA</div><h1>Dove prendere le misure</h1><p class="muted">Usa un metro morbido e tienilo parallelo al pavimento, aderente ma senza comprimere la pelle.</p>'+
