@@ -5,7 +5,7 @@ function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function h(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function num(x){return Number(String(x??'').replace(',','.'))}
 function fmt(x,d=1){return Number.isFinite(x)?x.toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d}):'—'}
-function calc(e){const sex=e.sex||state.profile.sex;const weight=num(e.weight),height=num(e.height??state.profile.height),waist=num(e.waist),neck=num(e.neck),hip=num(e.hip);const bmi=weight/(height/100)**2;let fat=NaN;if(height>0&&neck>0){const inch=1/2.54,H=height*inch;if(sex==='male'&&waist>neck){fat=86.010*Math.log10((waist-neck)*inch)-70.041*Math.log10(H)+36.76}else if(sex==='female'&&waist+hip>neck&&hip>0){fat=163.205*Math.log10((waist+hip-neck)*inch)-97.684*Math.log10(H)-104.912}}return {bmi,fat,lean:weight*(1-fat/100),fatKg:weight*fat/100,ratio:waist/height}}
+function calc(e){const sex=e.sex||state.profile.sex;const weight=num(e.weight),height=num(e.height??state.profile.height),waist=num(e.waist),neck=num(e.neck),hip=num(e.hip);const bmi=weight/(height/100)**2;let fat=NaN;if(height>0&&neck>0){const inch=1/2.54,H=height*inch;if(sex==='male'&&waist>neck){fat=86.010*Math.log10((waist-neck)*inch)-70.041*Math.log10(H)+36.76}else if(sex==='female'&&waist+hip>neck&&hip>0){fat=163.205*Math.log10((waist+hip-neck)*inch)-97.684*Math.log10(H)-78.387}}return {bmi,fat,lean:weight*(1-fat/100),fatKg:weight*fat/100,ratio:waist/height}}
 function bmiLabel(b){return b<18.5?'Sottopeso':b<25?'Normopeso':b<30?'Sovrappeso':'Obesità'}
 function ordered(){return [...state.entries].sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created)}
 function el(){return document.getElementById('app')}
@@ -46,8 +46,8 @@ function measure(){
   const last=ordered()[0]||state.profile||{};
   const saved=state.entries.find(e=>e.id===editing)||{};
   const x=draft|| (editing?saved:{});
-  const sex=x.sex||last.sex||'';
-  const height=x.height??last.height??'';
+  const sex=x.sex||last.sex||state.profile.sex||'';
+  const height=x.height??last.height??state.profile.height??'';
   const female=sex==='female';
   const title=editing?'Modifica misurazione':'Nuova misurazione';
   const msg=editing?'Modifica i dati: l’archivio verrà aggiornato solo dopo la tua conferma.':'Inserisci i dati, visualizza il risultato e scegli se archiviarlo.';
