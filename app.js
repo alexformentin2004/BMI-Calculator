@@ -5,12 +5,29 @@ function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function h(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function num(x){return Number(String(x??'').replace(',','.'))}
 function fmt(x,d=1){return Number.isFinite(x)?x.toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d}):'—'}
-function calc(e){const sex=e.sex||state.profile.sex;const weight=num(e.weight),height=num(e.height??state.profile.height),waist=num(e.waist),neck=num(e.neck),hip=num(e.hip);const bmi=weight/(height/100)**2;let fat=NaN;if(height>0&&neck>0){const inch=1/2.54,H=height*inch;if(sex==='male'&&waist>neck){fat=86.010*Math.log10((waist-neck)*inch)-70.041*Math.log10(H)+36.76}else if(sex==='female'&&waist+hip>neck&&hip>0){fat=163.205*Math.log10((waist+hip-neck)*inch)-97.684*Math.log10(H)-78.387}}return {bmi,fat,lean:weight*(1-fat/100),fatKg:weight*fat/100,ratio:waist/height}}
+function calc(e){
+  const sex=e.sex||state.profile.sex;
+  const weight=num(e.weight),height=num(e.height??state.profile.height),neck=num(e.neck),hip=num(e.hip);
+  const hasAbdomen=Object.prototype.hasOwnProperty.call(e,'abdomen');
+  const abdomen=sex==='male'?num(hasAbdomen?e.abdomen:e.waist):NaN;
+  const waist=sex==='male'&&!hasAbdomen?NaN:num(e.waist);
+  const bmi=weight/(height/100)**2;
+  let fat=NaN;
+  if(height>0&&neck>0){
+    const inch=1/2.54,H=height*inch;
+    if(sex==='male'&&abdomen>neck){
+      fat=86.010*Math.log10((abdomen-neck)*inch)-70.041*Math.log10(H)+36.76;
+    }else if(sex==='female'&&waist>0&&hip>0&&waist+hip>neck){
+      fat=163.205*Math.log10((waist+hip-neck)*inch)-97.684*Math.log10(H)-78.387;
+    }
+  }
+  return {bmi,fat,lean:weight*(1-fat/100),fatKg:weight*fat/100,ratio:waist>0?waist/height:NaN,waist,abdomen,neck,hip};
+}
 function bmiLabel(b){return b<18.5?'Sottopeso':b<25?'Normopeso':b<30?'Sovrappeso':'Obesità'}
 function ordered(){return [...state.entries].sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created)}
 function el(){return document.getElementById('app')}
 function nav(){return '<nav class="bottom"><button data-tab="home" class="'+(tab==='home'?'active':'')+'"><b>⌂</b>Home</button><button data-tab="stats" class="'+(tab==='stats'?'active':'')+'"><b>▥</b>Statistiche</button><button data-tab="archive" class="'+(tab==='archive'?'active':'')+'"><b>▤</b>Archivio</button></nav>'}
-function shell(inner){el().innerHTML='<header class="top"><div class="brand"><span class="logo">♡</span>BodyTrack <span class="app-version">v1.3</span></div><button class="gear" data-tab="guide" aria-label="Guida alle misure" title="Guida alle misure">ⓘ</button></header>'+inner+nav()}
+function shell(inner){el().innerHTML='<header class="top"><div class="brand"><span class="logo">♡</span>BodyTrack <span class="app-version">v1.4</span></div><button class="gear" data-tab="guide" aria-label="Guida alle misure" title="Guida alle misure">ⓘ</button></header>'+inner+nav()}
 function bmiWeightFloor(bmi,h2){return Math.ceil((bmi*h2-1e-9)*10)/10}
 function bmiWeightCeiling(bmi,h2){return (Math.ceil((bmi*h2-1e-9)*10)-1)/10}
 function bmiPanel(entry,calculated){
@@ -42,27 +59,65 @@ function home(){
   if(pending){result();return}
   measure();
 }
+function valueFor(x,key,sex,index){
+  const sample=x.samples?.[key];
+  if(index!==undefined){
+    if(x[key+index]!==undefined&&x[key+index]!==null)return x[key+index];
+    if(Array.isArray(sample)&&sample[index-1]!==undefined)return sample[index-1];
+    if(index===1)return valueFor(x,key,sex);
+    return '';
+  }
+  if(x[key]!==undefined&&x[key]!==null){
+    if(key==='waist'&&sex==='male'&&!Object.prototype.hasOwnProperty.call(x,'abdomen')&&!x.samples)return '';
+    return x[key];
+  }
+  if(key==='abdomen'&&sex==='male'&&x.waist!==undefined&&!x.samples)return x.waist;
+  if(Array.isArray(sample)&&sample.length)return sample[0];
+  return '';
+}
+function fieldInputs(x,sex,mode,key,label,required,description){
+  const isAccurate=mode==='accurate';
+  const v=(i)=>h(valueFor(x,key,sex,i));
+  const attributes='type="number" step=".1" min="'+(key==='neck'?'15':'20')+'" max="'+(key==='neck'?'100':'250')+'" inputmode="decimal"';
+  const req=required?'required':'';
+  const fields=isAccurate?
+    '<div class="repeat-grid">'+[1,2,3].map(i=>'<label><span>Misura '+i+'</span><input name="'+key+i+'" '+attributes+' '+req+' value="'+v(i)+'" placeholder="cm"></label>').join('')+'</div>':
+    '<input name="'+key+'" '+attributes+' '+req+' value="'+v()+'" placeholder="cm">';
+  return '<div class="measure-field"><div class="field-title"><strong>'+label+' (cm)</strong>'+(required?'':'<span class="optional">Facoltativa</span>')+'</div>'+fields+
+    '<p class="help">'+description+'</p></div>';
+}
 function measure(){
   const last=ordered()[0]||state.profile||{};
-  const saved=state.entries.find(e=>e.id===editing)||{};
-  const x=draft|| (editing?saved:{});
+  const saved=state.entries.find(e=>String(e.id)===String(editing))||{};
+  const x=draft||(editing?saved:{});
   const sex=x.sex||last.sex||state.profile.sex||'';
   const height=x.height??last.height??state.profile.height??'';
-  const female=sex==='female';
+  const age=x.age??last.age??state.profile.age??'';
+  const mode=x.mode||'standard';
+  const female=sex==='female',male=sex==='male';
   const title=editing?'Modifica misurazione':'Nuova misurazione';
-  const msg=editing?'Modifica i dati: l’archivio verrà aggiornato solo dopo la tua conferma.':'Inserisci i dati, visualizza il risultato e scegli se archiviarlo.';
+  const msg=editing?'Le modifiche saranno salvate solo dopo la conferma.':'Inserisci i dati, calcola i risultati e decidi se archiviarli.';
   const flash=notice?'<div class="flash" role="status">'+h(notice)+'</div>':'';
   notice='';
-  shell(flash+'<div class="small">IL TUO CORPO IN NUMERI</div><h1>'+title+'</h1><p class="muted">'+msg+'</p>'+
-    '<form id="measurement"><section class="panel"><h3>Informazioni per il calcolo</h3><div class="two">'+
+  shell(flash+'<div class="small">CALCOLATORE CORPOREO</div><h1>'+title+'</h1><p class="muted">'+msg+'</p>'+
+    '<form id="measurement"><section class="panel"><h3>Informazioni personali</h3><div class="two">'+
     '<label>Altezza (cm)<input name="height" type="number" step=".1" min="100" max="250" inputmode="decimal" required placeholder="180" value="'+h(height)+'"></label>'+
-    '<label>Sesso per la formula<select name="sex" required><option value="" '+(!sex?'selected':'')+'>Seleziona</option><option value="male" '+(sex==='male'?'selected':'')+'>Uomo</option><option value="female" '+(sex==='female'?'selected':'')+'>Donna</option></select></label></div></section>'+
-    '<section class="panel"><h3>Le tue misure</h3><label>Data<input name="date" type="date" required value="'+h(x.date||today())+'"></label>'+
-    '<label>Peso (kg)<input name="weight" type="number" step=".1" min="10" max="500" inputmode="decimal" required placeholder="85,5" value="'+h(x.weight??'')+'"></label>'+
-    '<div class="two"><label><span id="waist-label-text">'+(female?'Circonferenza vita (cm)':'Circonferenza addome (cm)')+'</span><input name="waist" type="number" step=".1" min="20" max="250" inputmode="decimal" required placeholder="'+(female?'75':'93')+'" value="'+h(x.waist??'')+'"></label>'+
-    '<label>Collo (cm)<input name="neck" type="number" step=".1" min="15" max="100" inputmode="decimal" required placeholder="42" value="'+h(x.neck??'')+'"></label></div>'+
-    '<label id="hip-field" '+(!female?'hidden':'')+'>Fianchi (cm)<input name="hip" type="number" step=".1" min="20" max="250" inputmode="decimal" '+(female?'required':'')+' placeholder="95" value="'+h(x.hip??'')+'"></label>'+
-    '<p class="help" id="measure-help">'+(female?'Per la formula femminile misura la vita nel punto più stretto, i fianchi nel punto più ampio e il collo appena sotto la laringe.':'Per la formula maschile misura l’addome all’ombelico, rilassato, e il collo appena sotto la laringe.')+'</p>'+
+    '<label>Età (anni)<input name="age" type="number" step="1" min="18" max="120" inputmode="numeric" required placeholder="22" value="'+h(age)+'"></label></div>'+
+    '<label>Sesso per la formula<select name="sex" required><option value="" '+(!sex?'selected':'')+'>Seleziona</option><option value="male" '+(male?'selected':'')+'>Uomo</option><option value="female" '+(female?'selected':'')+'>Donna</option></select></label>'+
+    '<p class="help">L’età serve a contestualizzare i risultati; non cambia le formule BMI e US Navy. Le categorie BMI qui sono per adulti.</p></section>'+
+    '<section class="panel"><h3>Misurazione attuale</h3><div class="two">'+
+    '<label>Data<input name="date" type="date" required value="'+h(x.date||today())+'"></label>'+
+    '<label>Peso (kg)<input name="weight" type="number" step=".1" min="10" max="500" inputmode="decimal" required placeholder="85,5" value="'+h(x.weight??'')+'"></label></div>'+
+    '<div class="mode-heading"><strong>Modalità di misurazione</strong><span>Per le circonferenze</span></div>'+
+    '<div class="mode-switch" role="group" aria-label="Modalità di misurazione">'+
+    '<label><input type="radio" name="mode" value="standard" '+(mode==='standard'?'checked':'')+'><span>Standard<small>1 misura</small></span></label>'+
+    '<label><input type="radio" name="mode" value="accurate" '+(mode==='accurate'?'checked':'')+'><span>Accurata<small>3 misure e media</small></span></label></div>'+
+    '<p class="help">'+(mode==='accurate'?'Inserisci tre letture per ogni circonferenza richiesta: useremo la media e segnaleremo differenze oltre 1 cm.':'Una lettura per circonferenza. Puoi scegliere la modalità accurata per ridurre gli errori casuali.')+'</p>'+
+    fieldInputs(x,sex,mode,'neck','Collo',true,'Appena sotto la laringe, senza stringere il metro.')+
+    (male?fieldInputs(x,sex,mode,'abdomen','Addome',true,'All’altezza dell’ombelico, a fine espirazione normale.'):'')+
+    fieldInputs(x,sex,mode,'waist','Vita',female,'Nel punto più stretto. Serve al rapporto vita/altezza; per l’uomo non cambia la stima US Navy.')+
+    (female?fieldInputs(x,sex,mode,'hip','Fianchi',true,'Nel punto di maggiore circonferenza dei glutei.'):'')+
+    (!sex?'<p class="help">Seleziona uomo o donna per vedere le circonferenze richieste dalla formula.</p>':'')+
     '<details class="guide-details"><summary>📏 Dove devo posizionare il metro?</summary><img src="guida-misure.svg" alt="Quattro illustrazioni: collo sotto la laringe, addome all’ombelico, vita nel punto più stretto, fianchi nel punto più ampio" loading="lazy"><p class="help">Mantieni il metro orizzontale, aderente senza stringere. <button class="text-link" type="button" data-tab="guide">Apri la guida completa</button></p></details></section>'+
     '<button type="submit" class="primary">Calcola i risultati</button></form>');
 }
