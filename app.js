@@ -73,6 +73,7 @@ function valueFor(x,key,sex,index){
   }
   if(key==='abdomen'&&sex==='male'&&x.waist!==undefined&&!x.samples)return x.waist;
   if(Array.isArray(sample)&&sample.length)return sample[0];
+  if(x[key+'1']!==undefined&&x[key+'1']!==null)return x[key+'1'];
   return '';
 }
 function fieldInputs(x,sex,mode,key,label,required,description){
@@ -81,8 +82,8 @@ function fieldInputs(x,sex,mode,key,label,required,description){
   const attributes='type="number" step=".1" min="'+(key==='neck'?'15':'20')+'" max="'+(key==='neck'?'100':'250')+'" inputmode="decimal"';
   const req=required?'required':'';
   const fields=isAccurate?
-    '<div class="repeat-grid">'+[1,2,3].map(i=>'<label><span>Misura '+i+'</span><input name="'+key+i+'" '+attributes+' '+req+' value="'+v(i)+'" placeholder="cm"></label>').join('')+'</div>':
-    '<input name="'+key+'" '+attributes+' '+req+' value="'+v()+'" placeholder="cm">';
+    '<div class="repeat-grid">'+[1,2,3].map(i=>'<label><span>Misura '+i+'</span><input name="'+key+i+'" aria-label="'+label+', misura '+i+' (cm)" '+attributes+' '+req+' value="'+v(i)+'" placeholder="cm"></label>').join('')+'</div>':
+    '<input name="'+key+'" aria-label="'+label+' (cm)" '+attributes+' '+req+' value="'+v()+'" placeholder="cm">';
   return '<div class="measure-field"><div class="field-title"><strong>'+label+' (cm)</strong>'+(required?'':'<span class="optional">Facoltativa</span>')+'</div>'+fields+
     '<p class="help">'+description+'</p></div>';
 }
@@ -245,7 +246,7 @@ document.addEventListener('click',e=>{
     const entry={...pending};
     state.entries=state.entries.filter(x=>String(x.id)!==String(entry.id));
     state.entries.push(entry);
-    state.profile={...state.profile,height:entry.height,sex:entry.sex};
+    state.profile={...state.profile,height:entry.height,sex:entry.sex,age:entry.age};
     save();resetCurrent(editing?'Misurazione aggiornata nell’archivio.':'Misurazione archiviata con successo.');
   }else if(b.dataset.action==='export'){
     const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
