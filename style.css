@@ -306,3 +306,5 @@ button:focus-visible { outline: 3px solid #ca7795; outline-offset: 3px; }
 .bmi-scale-labels span:nth-child(3) { left: 40%; }
 .bmi-scale-labels span:nth-child(4) { left: 60%; }
 .bmi-scale-labels span:nth-child(5) { left: 100%; transform: translateX(-100%); }
+
+.app-version{font-size:10px;line-height:1;letter-spacing:0;font-weight:750;color:#a34769;background:#fbe5ec;border:1px solid #efcad6;padding:6px 7px;border-radius:999px;white-space:nowrap;align-self:center}
