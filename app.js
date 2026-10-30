@@ -11,7 +11,52 @@ function ordered(){return [...state.entries].sort((a,b)=>b.date.localeCompare(a.
 function el(){return document.getElementById('app')}
 function nav(){return '<nav class="bottom"><button data-tab="home" class="'+(tab==='home'?'active':'')+'"><b>⌂</b>Home</button><button data-tab="stats" class="'+(tab==='stats'?'active':'')+'"><b>▥</b>Statistiche</button><button data-tab="archive" class="'+(tab==='archive'?'active':'')+'"><b>▤</b>Archivio</button></nav>'}
 function shell(inner){el().innerHTML='<header class="top"><div class="brand"><span class="logo">♡</span>BodyTrack</div><button class="gear" data-tab="settings" aria-label="Impostazioni">⚙</button></header>'+inner+nav()}
-function home(){const a=ordered(),e=a[0];if(!e){shell('<div class="small">IL TUO CORPO IN NUMERI</div><h1>Inizia il tuo percorso</h1><p class="muted">Inserisci la prima misurazione per vedere BMI, massa magra e massa grassa.</p><button class="primary" data-tab="measure">＋ Nuova misurazione</button>');return}const c=calc(e),v=Number.isFinite(c.fat)&&c.fat>=0&&c.fat<=70;const card=(title,value,sub)=>'<div class="card"><div class="small">'+title+'</div><div class="value">'+value+'</div><div class="caption">'+sub+'</div></div>';shell('<div class="small">IL TUO CORPO IN NUMERI</div><div class="weight">'+fmt(num(e.weight))+' kg</div><div class="muted">Peso attuale · '+h(e.date)+'</div><div class="grid">'+card('BMI',fmt(c.bmi,2),bmiLabel(c.bmi))+card('Massa grassa',v?fmt(c.fat)+'%':'—',v?fmt(c.fatKg)+' kg stimati':'Servono misure valide')+card('Massa magra',v?fmt(c.lean)+' kg':'—','Massa non grassa stimata')+card('Vita / altezza',fmt(c.ratio,3),'Rapporto')+'</div><section class="panel"><h3>Composizione corporea</h3>'+(v?'<div class="bar"><span class="lean" style="width:'+(100-c.fat)+'%"></span><span class="fat" style="width:'+c.fat+'%"></span></div><div class="legend"><span>'+fmt(100-c.fat)+'% massa magra</span><span>'+fmt(c.fat)+'% grassa</span></div>':'<div class="help">Inserisci una misura addominale e del collo attendibile.</div>')+'</section><button class="primary" data-tab="measure">＋ Nuova misurazione</button><p class="note">Massa grassa e magra: stime antropometriche, non misurazioni cliniche. La massa magra non equivale alla sola massa muscolare.</p>')}
+function bmiWeightFloor(bmi,h2){return Math.ceil((bmi*h2-1e-9)*10)/10}
+function bmiWeightCeiling(bmi,h2){return (Math.ceil((bmi*h2-1e-9)*10)-1)/10}
+function bmiPanel(entry,calculated){
+  const height=num(state.profile.height);
+  if(!(height>=100&&height<=250))return '';
+  const sq=(height/100)**2;
+  const normalMin=bmiWeightFloor(18.5,sq),normalMax=bmiWeightCeiling(25,sq);
+  const overMin=bmiWeightFloor(25,sq),overMax=bmiWeightCeiling(30,sq);
+  const obeseMin=bmiWeightFloor(30,sq);
+  const valid=entry&&calculated&&Number.isFinite(calculated.bmi);
+  const current=valid?calculated.bmi:NaN;
+  const group=valid?(current<18.5?'under':current<25?'normal':current<30?'over':'obese'):'';
+  const categories=[
+    {id:'under',label:'Sottopeso',bmi:'< 18,5',weight:'< '+fmt(normalMin)+' kg'},
+    {id:'normal',label:'Normopeso',bmi:'18,5 – < 25',weight:fmt(normalMin)+'–'+fmt(normalMax)+' kg'},
+    {id:'over',label:'Sovrappeso',bmi:'25 – < 30',weight:fmt(overMin)+'–'+fmt(overMax)+' kg'},
+    {id:'obese',label:'Obesità',bmi:'≥ 30',weight:'≥ '+fmt(obeseMin)+' kg'}
+  ];
+  const difference=valid?(current<18.5?Math.max(0,normalMin-num(entry.weight)):current>=25?Math.max(0,num(entry.weight)-normalMax):0):NaN;
+  const direction=!valid?'':group==='under'?'per raggiungere il limite inferiore':group==='normal'?'Sei già nella fascia normopeso':'per rientrare sotto il limite superiore';
+  const percent=valid?Math.min(99,Math.max(1,(current-15)/25*100)):0;
+  const rows=categories.map(c=>'<div class="bmi-row'+(group===c.id?' is-current':'')+'"><div><strong>'+c.label+'</strong>'+(group===c.id?'<span class="bmi-current">Il tuo valore</span>':'')+'</div><span class="bmi-range">'+c.bmi+'</span><span class="bmi-weight-range">'+c.weight+'</span></div>').join('');
+  return '<section class="panel bmi-panel"><div class="bmi-heading"><h3>Il BMI nel dettaglio</h3>'+(valid?'<span class="bmi-status '+group+'">'+bmiLabel(current)+'</span>':'')+'</div>'+
+    (valid?'<div class="bmi-score">'+fmt(current,2)+'<small>Indice di massa corporea</small></div><div class="bmi-scale" role="img" aria-label="Scala BMI: il tuo valore è '+fmt(current,2)+'"><span></span><span></span><span></span><span></span><i class="bmi-marker" style="left:'+percent+'%"></i></div><div class="bmi-scale-labels"><span>15</span><span>18,5</span><span>25</span><span>30</span><span>40+</span></div>':'<p class="help">Registra la prima misurazione per visualizzare il tuo BMI.</p>')+
+    '<div class="bmi-highlights"><div class="bmi-highlight"><span>Normopeso per '+fmt(height,0)+' cm</span><strong>'+fmt(normalMin)+'–'+fmt(normalMax)+' kg</strong></div>'+
+    (valid?'<div class="bmi-highlight"><span>'+(group==='normal'?'La tua fascia':'Differenza dalla fascia')+'</span><strong>'+(group==='normal'?'Normopeso':fmt(difference)+' kg')+'</strong><small>'+direction+'</small></div>':'')+'</div>'+
+    '<h4>Intervalli BMI e peso per la tua altezza</h4><div class="bmi-table"><div class="bmi-row bmi-table-head"><span>Categoria</span><span>BMI</span><span>Peso</span></div>'+rows+'</div>'+
+    '<p class="note">Classificazione BMI per adulti. I pesi sono calcolati per la tua altezza e arrotondati a 0,1 kg, mantenendo le soglie corrette. Il BMI non distingue grasso e muscoli: non è un obiettivo di peso personalizzato.</p></section>';
+}
+function home(){
+  const a=ordered(),e=a[0];
+  if(!e){
+    shell('<div class="small">IL TUO CORPO IN NUMERI</div><h1>Inizia il tuo percorso</h1><p class="muted">Inserisci la prima misurazione per vedere BMI, massa magra e massa grassa.</p><button class="primary" data-tab="measure">＋ Nuova misurazione</button>'+bmiPanel(null,null));
+    return;
+  }
+  const c=calc(e),v=Number.isFinite(c.fat)&&c.fat>=0&&c.fat<=70;
+  const card=(title,value,sub)=>'<div class="card"><div class="small">'+title+'</div><div class="value">'+value+'</div><div class="caption">'+sub+'</div></div>';
+  shell('<div class="small">IL TUO CORPO IN NUMERI</div><div class="weight">'+fmt(num(e.weight))+' kg</div><div class="muted">Peso attuale · '+h(e.date)+'</div><div class="grid">'+
+    card('BMI',fmt(c.bmi,2),bmiLabel(c.bmi))+
+    card('Massa grassa',v?fmt(c.fat)+'%':'—',v?fmt(c.fatKg)+' kg stimati':'Servono misure valide')+
+    card('Massa magra',v?fmt(c.lean)+' kg':'—','Massa non grassa stimata')+
+    card('Vita / altezza',fmt(c.ratio,3),'Rapporto')+
+    '</div><section class="panel"><h3>Composizione corporea</h3>'+
+    (v?'<div class="bar"><span class="lean" style="width:'+(100-c.fat)+'%"></span><span class="fat" style="width:'+c.fat+'%"></span></div><div class="legend"><span>'+fmt(100-c.fat)+'% massa magra</span><span>'+fmt(c.fat)+'% grassa</span></div>':'<div class="help">Inserisci una misura addominale e del collo attendibile.</div>')+
+    '</section>'+bmiPanel(e,c)+'<button class="primary" data-tab="measure">＋ Nuova misurazione</button><p class="note">Massa grassa e magra: stime antropometriche, non misurazioni cliniche. La massa magra non equivale alla sola massa muscolare.</p>');
+}
 function measure(){const x=state.entries.find(e=>e.id===editing)||{};const female=state.profile.sex==='female';shell('<h1>'+(editing?'Modifica misurazione':'Nuova misurazione')+'</h1><p class="muted">Calcolo immediato e salvataggio nel tuo archivio.</p><form id="measurement"><label>Data<input type="date" name="date" required value="'+h(x.date||today())+'"></label><label>Peso (kg)<input type="number" name="weight" step="0.1" min="10" max="500" inputmode="decimal" required value="'+h(x.weight??'')+'" placeholder="85,5"></label><div class="two"><label>Addome (cm)<input type="number" name="waist" step="0.1" min="20" max="250" inputmode="decimal" required value="'+h(x.waist??'')+'" placeholder="93"></label><label>Collo (cm)<input type="number" name="neck" step="0.1" min="15" max="100" inputmode="decimal" required value="'+h(x.neck??'')+'" placeholder="42"></label></div>'+(female?'<label>Fianchi (cm)<input type="number" name="hip" step="0.1" min="20" max="250" inputmode="decimal" required value="'+h(x.hip??'')+'"></label>':'')+'<p class="help">Metodo US Navy: misura l’addome all’altezza dell’ombelico, rilassato, a fine espirazione; collo appena sotto la laringe. Il valore è una stima.</p><button type="submit" class="primary">Salva misurazione</button></form>')}
 function archive(){let a=ordered();shell('<h1>Archivio</h1><p class="muted">'+a.length+' misurazion'+(a.length===1?'e':'i')+' salvate</p><div class="row"><button class="secondary" data-action="export">Esporta JSON</button><button class="secondary" data-action="import">Importa backup</button></div><input hidden id="import-file" type="file" accept="application/json"><section class="panel">'+(a.length?a.map(e=>{const c=calc(e);return '<div class="entry"><div class="entryhead"><strong>'+h(e.date)+'</strong><span class="pill">'+fmt(num(e.weight))+' kg</span></div><p class="help">BMI '+fmt(c.bmi,2)+' · Grasso '+fmt(c.fat)+'% · Massa magra '+fmt(c.lean)+' kg</p><div class="actions"><button class="secondary" data-edit="'+h(e.id)+'">Modifica</button><button class="danger" data-delete="'+h(e.id)+'">Elimina</button></div></div>'}).join(''):'<div class="empty">Nessuna misurazione presente.</div>')+'</section><button class="primary" data-tab="measure">＋ Nuova misurazione</button>')}
 function graph(data,key){if(data.length<2)return '<div class="empty">Servono almeno due misurazioni per visualizzare il grafico.</div>';const w=320,H=150,p=20,vals=data.map(x=>x[key]),lo=Math.min(...vals),hi=Math.max(...vals),pad=Math.max((hi-lo)*.18,key==='fat'?1:.5),min=lo-pad,max=hi+pad;const pts=data.map((x,i)=>[p+i*(w-2*p)/(data.length-1),H-p-(x[key]-min)/(max-min)*(H-2*p)]);return '<svg class="chart" viewBox="0 0 320 175" role="img" aria-label="Grafico storico '+h(key)+'"><path d="M20 20 V130 H300" fill="none" stroke="#e6d0d9" stroke-width="1"/><polyline points="'+pts.map(p=>p.join(',')).join(' ')+'" fill="none" stroke="#b3456e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+pts.map(p=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.5" fill="#b3456e"/>').join('')+'<text x="20" y="166" fill="#786572" font-size="12">'+h(data[0].date)+'</text><text x="300" y="166" text-anchor="end" fill="#786572" font-size="12">'+h(data[data.length-1].date)+'</text></svg>'}
