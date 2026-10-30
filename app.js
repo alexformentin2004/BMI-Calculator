@@ -53,6 +53,7 @@ function nav(){
   ).join('')+'</nav>';
 }
 function shell(inner){
+  focusedInput=null;document.body?.classList?.remove('keyboard-active');
   el().innerHTML='<header class="top"><div class="brand"><span class="logo">'+icon('heart',25)+'</span><span class="brand-name">BodyTrack<small>WELLNESS STUDIO</small></span><span class="app-version">v1.6</span></div><button type="button" class="gear" data-tab="guide" aria-label="Guida alle misure" title="Guida alle misure">'+icon('help',21)+'</button></header><main id="content">'+inner+'</main>'+nav()+'<div id="toast-host" class="toast-host" role="status" aria-live="polite" aria-atomic="true"></div><div id="dialog-host"></div><div id="keyboard-tools" class="keyboard-tools" role="toolbar" aria-label="Navigazione campi di misura" hidden><button type="button" data-keyboard="previous" aria-label="Campo precedente"><span class="arrow-back">'+icon('arrow',16)+'</span> Precedente</button><button type="button" data-keyboard="next">Successivo '+icon('arrow',16)+'</button><button type="button" class="keyboard-done" data-keyboard="done">Fine</button></div>';
 }
 function bmiWeightFloor(bmi,h2){return Math.ceil((bmi*h2-1e-9)*10)/10}
@@ -274,6 +275,108 @@ function readCircumference(form,key,mode,required){
   const min=key==='neck'?15:20,max=key==='neck'?100:250;
   if(values.some(v=>!Number.isFinite(v)||v<min||v>max))throw new Error('Controlla le misure di '+label+'.');
   return {average:Math.round(values.reduce((a,b)=>a+b,0)/values.length*10)/10,readings:values};
+}
+let dialogAction=null, dialogReturnFocus=null, toastSequence=0, focusedInput=null;
+function toast(message,kind='success'){
+  const host=document.getElementById('toast-host');if(!host)return;
+  const serial=++toastSequence;
+  host.innerHTML='<div class="app-toast '+(kind==='error'?'toast-error':'toast-success')+'">'+
+    '<span class="toast-symbol">'+icon(kind==='error'?'help':'check',19)+'</span><span class="toast-message">'+h(message)+'</span>'+
+    '<button type="button" data-toast-close aria-label="Chiudi notifica">×</button></div>';
+  setTimeout(()=>{if(serial===toastSequence&&document.getElementById('toast-host')===host)host.innerHTML='';},4200);
+}
+function askConfirmation({title,message,confirmText,danger=false},action){
+  const host=document.getElementById('dialog-host');if(!host)return;
+  dialogAction=action;dialogReturnFocus=document.activeElement;
+  host.innerHTML='<div class="dialog-backdrop"><section class="app-dialog" role="alertdialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-description">'+
+    '<div class="dialog-symbol '+(danger?'dialog-danger':'')+'">'+icon(danger?'archive':'upload',25)+'</div>'+
+    '<h2 id="dialog-title">'+h(title)+'</h2><p id="dialog-description">'+h(message)+'</p>'+
+    '<div class="dialog-actions"><button type="button" class="secondary" data-modal="cancel">Annulla</button>'+
+    '<button type="button" class="'+(danger?'danger':'primary')+'" data-modal="confirm">'+h(confirmText)+'</button></div></section></div>';
+  document.body?.classList?.add('modal-open');
+  host.querySelector('[data-modal="cancel"]')?.focus();
+}
+function closeConfirmation(){
+  const host=document.getElementById('dialog-host');
+  if(host)host.innerHTML='';
+  dialogAction=null;
+  document.body?.classList?.remove('modal-open');
+  const previous=dialogReturnFocus;dialogReturnFocus=null;
+  if(previous?.isConnected)previous.focus();
+}
+function numberFields(){
+  return Array.from(document.querySelectorAll('#measurement input[type="number"]'));
+}
+function keyboardState(show){
+  const tools=document.getElementById('keyboard-tools');
+  if(!tools)return;
+  const touch=typeof window!=='undefined'&&window.matchMedia?.('(pointer: coarse)')?.matches;
+  const visible=!!(show&&touch);
+  tools.hidden=!visible;
+  document.body?.classList?.toggle('keyboard-active',visible);
+  if(!visible)return;
+  const fields=numberFields(),index=fields.indexOf(focusedInput);
+  const prev=tools.querySelector('[data-keyboard="previous"]'),next=tools.querySelector('[data-keyboard="next"]');
+  if(prev)prev.disabled=index<=0;
+  if(next)next.disabled=index<0||index===fields.length-1;
+  updateKeyboardOffset();
+}
+function updateKeyboardOffset(){
+  if(typeof window==='undefined'||!window.visualViewport)return;
+  const vv=window.visualViewport;
+  const overlap=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+  document.documentElement?.style?.setProperty('--keyboard-overlap',overlap+'px');
+}
+function navigateNumber(direction){
+  const fields=numberFields(),index=fields.indexOf(focusedInput);
+  if(index<0)return;
+  const next=fields[index+direction];
+  if(next){next.focus();setTimeout(()=>next.scrollIntoView?.({block:'center',behavior:'smooth'}),150);}
+  else if(direction>0){focusedInput.blur();keyboardState(false);}
+}
+function formError(message,field){
+  toast(message,'error');
+  if(field){
+    const target=document.querySelector('#measurement [name="'+field+'"]');
+    if(target){target.focus();setTimeout(()=>target.scrollIntoView?.({block:'center',behavior:'smooth'}),180);}
+  }
+}
+document.addEventListener('focusin',e=>{
+  if(e.target.matches?.('#measurement input[type="number"]')){
+    focusedInput=e.target;
+    const fields=numberFields();
+    e.target.setAttribute('enterkeyhint',fields.indexOf(e.target)===fields.length-1?'done':'next');
+    keyboardState(true);
+    setTimeout(()=>{if(document.activeElement===e.target)e.target.scrollIntoView?.({block:'center',behavior:'smooth'});},240);
+  }else if(!e.target.closest?.('#keyboard-tools')){
+    keyboardState(false);
+  }
+});
+document.addEventListener('focusout',()=>{
+  setTimeout(()=>{
+    const current=document.activeElement;
+    if(!current?.matches?.('#measurement input[type="number"]'))keyboardState(false);
+  },160);
+});
+document.addEventListener('keydown',e=>{
+  if(dialogAction){
+    if(e.key==='Escape'){e.preventDefault();closeConfirmation();return;}
+    if(e.key==='Tab'){
+      const buttons=Array.from(document.querySelectorAll('#dialog-host [data-modal]'));
+      if(!buttons.length)return;
+      const index=buttons.indexOf(document.activeElement);
+      if(e.shiftKey&&index<=0){e.preventDefault();buttons[buttons.length-1].focus();}
+      else if(!e.shiftKey&&index===buttons.length-1){e.preventDefault();buttons[0].focus();}
+    }
+    return;
+  }
+  if(e.key==='Enter'&&e.target.matches?.('#measurement input[type="number"]')){
+    e.preventDefault();focusedInput=e.target;navigateNumber(1);
+  }
+});
+if(typeof window!=='undefined'&&window.visualViewport){
+  window.visualViewport.addEventListener('resize',updateKeyboardOffset);
+  window.visualViewport.addEventListener('scroll',updateKeyboardOffset);
 }
 function resetCurrent(message){
   pending=null;draft=null;editing=null;tab='home';
