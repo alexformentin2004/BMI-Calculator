@@ -339,3 +339,38 @@ button:focus-visible { outline: 3px solid #ca7795; outline-offset: 3px; }
   .decision-actions { gap: 8px; }
   .decision-actions button { padding: 13px 7px; font-size: 12px; }
 }
+
+
+/* BodyTrack 1.4 — repeatable anthropometry measurements */
+.mode-heading { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin:19px 0 10px; }
+.mode-heading strong { font-size:14px; }
+.mode-heading span { font-size:11px; color:#796674; }
+.mode-switch { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+.mode-switch label { display:block; position:relative; margin:0; cursor:pointer; }
+.mode-switch input { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
+.mode-switch label > span { display:block; padding:12px 10px; border:1px solid #e9d4dc; border-radius:15px; background:#fff8fa; text-align:center; color:#735668; font-size:13px; font-weight:750; transition:background .16s,border-color .16s; }
+.mode-switch small { display:block; font-size:11px; color:#8c7884; font-weight:500; margin-top:3px; }
+.mode-switch input:checked + span { background:#f9e3eb; border-color:#b74f76; color:#9e3d61; box-shadow:inset 0 0 0 1px #b74f76; }
+.mode-switch input:focus-visible + span { outline:3px solid #d68ca7; outline-offset:3px; }
+.mode-switch input:checked + span small { color:#8c4b64; }
+.measure-field { margin:20px 0 0; border-top:1px solid #f0e2e7; padding-top:15px; }
+.field-title { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:9px; }
+.field-title strong { font-size:14px; color:#503b49; }
+.optional { font-size:10px; color:#8a6574; background:#fff0f4; border-radius:999px; padding:5px 9px; }
+.measure-field > input { width:100%; }
+.measure-field .help { margin:8px 0 0; }
+.repeat-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.repeat-grid label { margin:0; gap:6px; font-size:11px; }
+.repeat-grid input { padding:12px 8px; width:100%; min-width:0; text-align:center; font-variant-numeric:tabular-nums; }
+.measurement-detail-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:15px; }
+.measurement-detail { background:#fff5f8; border:1px solid #f1dfe6; padding:12px; border-radius:14px; display:grid; gap:5px; }
+.measurement-detail span { color:#816c79; font-size:12px; }
+.measurement-detail strong { color:#8f3d5e; font-size:17px; font-variant-numeric:tabular-nums; }
+.quality-good { margin-top:11px; padding:12px 13px; background:#eff8f3; color:#2f7158; border:1px solid #cce8d9; border-radius:13px; font-size:12px; line-height:1.5; }
+.quality-warning { margin-top:11px; padding:12px 13px; background:#fff2e6; color:#8b5830; border:1px solid #f3d9bc; border-radius:13px; font-size:12px; line-height:1.5; }
+.entry-meta { color:#8b7481; font-size:11px; margin:7px 0 0; }
+@media(max-width:360px){
+  .repeat-grid { gap:5px; }
+  .repeat-grid input { padding:11px 5px; }
+  .mode-switch label > span { padding:12px 6px; }
+}
