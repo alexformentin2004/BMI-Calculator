@@ -741,7 +741,7 @@ form .two { gap: 12px; }
 .stat-summary-label { display: block; color: #a38c9a; font-size: 9px; font-weight: 770; letter-spacing: 1px; text-transform: uppercase; }
 .stat-summary strong { display: block; color: #503547; font-size: clamp(31px, 8vw, 40px); font-weight: 800; line-height: 1.2; letter-spacing: -1.5px; margin-top: 5px; }
 .stat-delta { flex-shrink: 0; padding: 8px 10px; border-radius: 12px; background: #f7eaf0; color: #a44e71; font-size: 13px; font-weight: 750; }
-.stat-delta.is-negative { background: #eaf7f0; color: #397c63; }
+.stat-delta.is-negative { background: #f1eff2; color: #766874; }
 .stat-delta small { display: block; margin-top: 3px; color: inherit; opacity: .7; font-size: 9px; font-weight: 550; }
 .chart-wrap { padding: 4px 0 0; }
 svg.chart { width: 100%; height: auto; overflow: visible; }
