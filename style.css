@@ -297,3 +297,12 @@ button:focus-visible { outline: 3px solid #ca7795; outline-offset: 3px; }
   .bmi-row { grid-template-columns: minmax(0,1.1fr) minmax(0,.85fr) minmax(0,1fr); padding: 10px 5px; font-size: 10px; gap: 4px; }
   .bmi-row strong { font-size: 11px; }
 }
+
+/* Align the scale ticks with the actual BMI boundaries (15, 18.5, 25, 30, 40). */
+.bmi-scale-labels { position: relative; display: block; height: 16px; }
+.bmi-scale-labels span { position: absolute; top: 0; transform: translateX(-50%); }
+.bmi-scale-labels span:nth-child(1) { left: 0; transform: none; }
+.bmi-scale-labels span:nth-child(2) { left: 14%; }
+.bmi-scale-labels span:nth-child(3) { left: 40%; }
+.bmi-scale-labels span:nth-child(4) { left: 60%; }
+.bmi-scale-labels span:nth-child(5) { left: 100%; transform: translateX(-100%); }
