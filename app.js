@@ -1,5 +1,5 @@
 (() => {'use strict';
-const KEY='bodytrack_v1'; const today=()=>new Date().toLocaleDateString('sv-SE'); let state=load(); let tab='home'; let editing=null; let pending=null; let draft=null; let notice=''; let metric='fat'; let period='all';
+const KEY='bodytrack_v1'; const today=()=>new Date().toLocaleDateString('sv-SE'); let state=load(); let tab='home'; let editing=null; let pending=null; let draft=null; let metric='fat'; let period='all';
 function load(){try{const p=JSON.parse(localStorage.getItem(KEY));if(p&&Array.isArray(p.entries))return {profile:p.profile||{},entries:p.entries}}catch(e){}return {profile:{},entries:[]}}
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function h(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -53,7 +53,7 @@ function nav(){
   ).join('')+'</nav>';
 }
 function shell(inner){
-  el().innerHTML='<header class="top"><div class="brand"><span class="logo">'+icon('heart',25)+'</span><span class="brand-name">BodyTrack<small>WELLNESS STUDIO</small></span><span class="app-version">v1.5</span></div><button type="button" class="gear" data-tab="guide" aria-label="Guida alle misure" title="Guida alle misure">'+icon('help',21)+'</button></header><main id="content">'+inner+'</main>'+nav();
+  el().innerHTML='<header class="top"><div class="brand"><span class="logo">'+icon('heart',25)+'</span><span class="brand-name">BodyTrack<small>WELLNESS STUDIO</small></span><span class="app-version">v1.6</span></div><button type="button" class="gear" data-tab="guide" aria-label="Guida alle misure" title="Guida alle misure">'+icon('help',21)+'</button></header><main id="content">'+inner+'</main>'+nav()+'<div id="toast-host" class="toast-host" role="status" aria-live="polite" aria-atomic="true"></div><div id="dialog-host"></div><div id="keyboard-tools" class="keyboard-tools" role="toolbar" aria-label="Navigazione campi di misura" hidden><button type="button" data-keyboard="previous" aria-label="Campo precedente"><span class="arrow-back">'+icon('arrow',16)+'</span> Precedente</button><button type="button" data-keyboard="next">Successivo '+icon('arrow',16)+'</button><button type="button" class="keyboard-done" data-keyboard="done">Fine</button></div>';
 }
 function bmiWeightFloor(bmi,h2){return Math.ceil((bmi*h2-1e-9)*10)/10}
 function bmiWeightCeiling(bmi,h2){return (Math.ceil((bmi*h2-1e-9)*10)-1)/10}
@@ -106,7 +106,7 @@ function valueFor(x,key,sex,index){
 function fieldInputs(x,sex,mode,key,label,required,description){
   const isAccurate=mode==='accurate';
   const v=(i)=>h(valueFor(x,key,sex,i));
-  const attributes='type="number" step=".1" min="'+(key==='neck'?'15':'20')+'" max="'+(key==='neck'?'100':'250')+'" inputmode="decimal"';
+  const attributes='type="number" step=".1" min="'+(key==='neck'?'15':'20')+'" max="'+(key==='neck'?'100':'250')+'" inputmode="decimal" enterkeyhint="next" autocomplete="off"';
   const req=required?'required':'';
   const fields=isAccurate?
     '<div class="repeat-grid">'+[1,2,3].map(i=>'<label><span>Misura '+i+'</span><input name="'+key+i+'" aria-label="'+label+', misura '+i+' (cm)" '+attributes+' '+req+' value="'+v(i)+'" placeholder="cm"></label>').join('')+'</div>':
@@ -125,17 +125,15 @@ function measure(){
   const female=sex==='female',male=sex==='male';
   const title=editing?'Modifica misurazione':'Nuova misurazione';
   const msg=editing?'Le modifiche saranno salvate solo dopo la conferma.':'Inserisci i dati, calcola i risultati e decidi se archiviarli.';
-  const flash=notice?'<div class="flash" role="status">'+h(notice)+'</div>':'';
-  notice='';
-  shell(flash+'<div class="page-heading"><div class="small">IL TUO PERCORSO BENESSERE</div><h1>'+title+'</h1><p class="muted">'+msg+'</p></div>'+
-    '<form id="measurement"><section class="panel form-panel"><div class="section-heading"><span class="section-icon section-icon-rose">'+icon('user',20)+'</span><div><span class="section-step">PASSAGGIO 01</span><h3>Informazioni personali</h3></div></div><div class="two">'+
-    '<label>Altezza (cm)<input name="height" type="number" step=".1" min="100" max="250" inputmode="decimal" required placeholder="180" value="'+h(height)+'"></label>'+
-    '<label>Età (anni)<input name="age" type="number" step="1" min="18" max="120" inputmode="numeric" required placeholder="22" value="'+h(age)+'"></label></div>'+
+  shell('<div class="page-heading"><div class="small">IL TUO PERCORSO BENESSERE</div><h1>'+title+'</h1><p class="muted">'+msg+'</p></div>'+
+    '<form id="measurement" novalidate autocomplete="off"><section class="panel form-panel"><div class="section-heading"><span class="section-icon section-icon-rose">'+icon('user',20)+'</span><div><span class="section-step">PASSAGGIO 01</span><h3>Informazioni personali</h3></div></div><div class="two">'+
+    '<label>Altezza (cm)<input name="height" type="number" step=".1" min="100" max="250" inputmode="decimal" enterkeyhint="next" required placeholder="180" value="'+h(height)+'"></label>'+
+    '<label>Età (anni)<input name="age" type="number" step="1" min="18" max="120" inputmode="numeric" enterkeyhint="next" required placeholder="22" value="'+h(age)+'"></label></div>'+
     '<label>Sesso per la formula<select name="sex" required><option value="" '+(!sex?'selected':'')+'>Seleziona</option><option value="male" '+(male?'selected':'')+'>Uomo</option><option value="female" '+(female?'selected':'')+'>Donna</option></select></label>'+
     '<p class="help">L’età serve a contestualizzare i risultati; non cambia le formule BMI e US Navy. Le categorie BMI qui sono per adulti.</p></section>'+
     '<section class="panel form-panel"><div class="section-heading"><span class="section-icon section-icon-sage">'+icon('ruler',20)+'</span><div><span class="section-step">PASSAGGIO 02</span><h3>Misurazione attuale</h3></div></div><div class="two">'+
-    '<label>Data<input name="date" type="date" required value="'+h(x.date||today())+'"></label>'+
-    '<label>Peso (kg)<input name="weight" type="number" step=".1" min="10" max="500" inputmode="decimal" required placeholder="85,5" value="'+h(x.weight??'')+'"></label></div>'+
+    '<label>Data<input name="date" type="date" enterkeyhint="next" required value="'+h(x.date||today())+'"></label>'+
+    '<label>Peso (kg)<input name="weight" type="number" step=".1" min="10" max="500" inputmode="decimal" enterkeyhint="next" required placeholder="85,5" value="'+h(x.weight??'')+'"></label></div>'+
     '<div class="mode-heading"><strong>Modalità di misurazione</strong><span>Per le circonferenze</span></div>'+
     '<div class="mode-switch" role="group" aria-label="Modalità di misurazione">'+
     '<label><input type="radio" name="mode" value="standard" '+(mode==='standard'?'checked':'')+'><span>Standard<small>1 misura</small></span></label>'+
@@ -278,8 +276,8 @@ function readCircumference(form,key,mode,required){
   return {average:Math.round(values.reduce((a,b)=>a+b,0)/values.length*10)/10,readings:values};
 }
 function resetCurrent(message){
-  pending=null;draft=null;editing=null;tab='home';notice=message||'';
-  render();scrollTo(0,0);
+  pending=null;draft=null;editing=null;tab='home';
+  render();scrollTo(0,0);if(message)toast(message);
 }
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-tab],[data-edit],[data-delete],[data-period],[data-action]');
