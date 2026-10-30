@@ -451,7 +451,7 @@ document.addEventListener('change',e=>{
     file.text().then(t=>{
       const v=JSON.parse(t);
       if(!v||!Array.isArray(v.entries)||!v.entries.every(e=>e&&typeof e==='object'&&
-        typeof e.date==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(e.date)&&
+        typeof e.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(e.date)&&
         (typeof e.id==='string'||typeof e.id==='number')&&Number.isFinite(num(e.weight)))||
         (v.profile!==undefined&&(!v.profile||typeof v.profile!=='object'||Array.isArray(v.profile)))){
         throw new Error('Il file non contiene un archivio BodyTrack valido.');
