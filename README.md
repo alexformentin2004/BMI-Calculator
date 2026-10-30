@@ -1,6 +1,18 @@
-# BodyTrack 1.4 — Calcolatore corporeo dettagliato
+# BodyTrack 1.5 — Wellness Redesign
 
-PWA mobile-first, con grafica chiara rosa cipria, per calcolare BMI, stima della composizione corporea, rapporto vita/altezza e tenere uno storico **solo delle misurazioni archiviate esplicitamente**.
+PWA mobile-first, con grafica rosa cipria completamente rinnovata, per calcolare BMI, stima della composizione corporea, rapporto vita/altezza e tenere uno storico **solo delle misurazioni archiviate esplicitamente**.
+
+## Design e navigazione (v1.5)
+
+Restyling completo in stile wellness: palette rosa cipria, superfici bianche, verde salvia, tipografia di sistema, sezioni leggibili e pulsanti con aree touch ampie. La barra inferiore è flottante e utilizza **tre icone SVG vettoriali originali** (Home, Statistiche e Archivio), con stato attivo visibile e etichette accessibili. Anche il marchio e l'icona della PWA sono coordinati.
+
+- Home: due schede con passaggi numerati, selettore Standard/Accurata e guida integrata.
+- Risultato: scheda del peso, metriche in quattro card, BMI dettagliato e scelta esplicita di archiviazione.
+- Statistiche: grafico con linea morbida, sfumatura, selezione del periodo e riepilogo della variazione.
+- Archivio: card per misurazione, indicatori rapidi e backup JSON.
+- Layout adattivo per schermi piccoli, safe area di iPhone, focus accessibile e animazioni ridotte per chi lo richiede.
+
+**Le formule e il formato dei dati (`bodytrack_v1`) non cambiano:** nessuna migrazione o cancellazione dei dati esistenti è richiesta.
 
 ## Nuova Home
 
