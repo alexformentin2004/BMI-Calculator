@@ -27,8 +27,34 @@ function calc(e){
 function bmiLabel(b){return b<18.5?'Sottopeso':b<25?'Normopeso':b<30?'Sovrappeso':'Obesità'}
 function ordered(){return [...state.entries].sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created)}
 function el(){return document.getElementById('app')}
-function nav(){return '<nav class="bottom"><button data-tab="home" class="'+(tab==='home'?'active':'')+'"><b>⌂</b>Home</button><button data-tab="stats" class="'+(tab==='stats'?'active':'')+'"><b>▥</b>Statistiche</button><button data-tab="archive" class="'+(tab==='archive'?'active':'')+'"><b>▤</b>Archivio</button></nav>'}
-function shell(inner){el().innerHTML='<header class="top"><div class="brand"><span class="logo">♡</span>BodyTrack <span class="app-version">v1.4</span></div><button class="gear" data-tab="guide" aria-label="Guida alle misure" title="Guida alle misure">ⓘ</button></header>'+inner+nav()}
+function icon(name,size=22){
+  const paths={
+    home:'<path d="m3.5 10 8.5-7 8.5 7v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M9 21v-7h6v7"/>',
+    chart:'<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-7"/><path d="M17 7h3v3"/>',
+    archive:'<rect x="3" y="4" width="18" height="4" rx="1.5"/><path d="M5 8v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>',
+    heart:'<path d="M20.8 5.6a5.4 5.4 0 0 0-7.6 0L12 6.8l-1.2-1.2a5.4 5.4 0 0 0-7.6 7.6L12 22l8.8-8.8a5.4 5.4 0 0 0 0-7.6Z"/><path d="M4.5 12h4l1.5-2.5 3 5 1.5-2.5h5"/>',
+    help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.7 2.7 0 1 1 4.3 2.2c-1.1.8-1.8 1.2-1.8 2.8"/><path d="M12 17.4h.01"/>',
+    user:'<circle cx="12" cy="8" r="3.5"/><path d="M4.5 21v-2a7.5 7.5 0 0 1 15 0v2"/>',
+    ruler:'<path d="M3 16 16 3l5 5L8 21z"/><path d="m13 6 2 2M10 9l2 2M7 12l2 2"/>',
+    calculator:'<rect x="4" y="2.5" width="16" height="19" rx="3"/><path d="M8 7h8M8 12h2m4 0h2m-8 4h2m4 0h2"/>',
+    check:'<path d="m4.5 12.5 5 5L20 7"/>',
+    download:'<path d="M12 3v12m-4-4 4 4 4-4"/><path d="M4 17v3h16v-3"/>',
+    upload:'<path d="M12 16V4m-4 4 4-4 4 4"/><path d="M4 17v3h16v-3"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    arrow:'<path d="M5 12h14m-6-6 6 6-6 6"/>',
+    calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/>'
+  };
+  return '<svg class="ui-icon" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.help)+'</svg>';
+}
+function nav(){
+  const tabs=[['home','Home','home'],['stats','Statistiche','chart'],['archive','Archivio','archive']];
+  return '<nav class="bottom" aria-label="Navigazione principale">'+tabs.map(([id,label,symbol])=>
+    '<button type="button" data-tab="'+id+'" class="nav-item'+(tab===id?' active':'')+'" aria-label="'+label+'"'+(tab===id?' aria-current="page"':'')+'><span class="nav-icon">'+icon(symbol,23)+'</span><span class="nav-label">'+label+'</span></button>'
+  ).join('')+'</nav>';
+}
+function shell(inner){
+  el().innerHTML='<header class="top"><div class="brand"><span class="logo">'+icon('heart',25)+'</span><span class="brand-name">BodyTrack<small>WELLNESS STUDIO</small></span><span class="app-version">v1.5</span></div><button type="button" class="gear" data-tab="guide" aria-label="Guida alle misure" title="Guida alle misure">'+icon('help',21)+'</button></header><main id="content">'+inner+'</main>'+nav();
+}
 function bmiWeightFloor(bmi,h2){return Math.ceil((bmi*h2-1e-9)*10)/10}
 function bmiWeightCeiling(bmi,h2){return (Math.ceil((bmi*h2-1e-9)*10)-1)/10}
 function bmiPanel(entry,calculated){
@@ -101,13 +127,13 @@ function measure(){
   const msg=editing?'Le modifiche saranno salvate solo dopo la conferma.':'Inserisci i dati, calcola i risultati e decidi se archiviarli.';
   const flash=notice?'<div class="flash" role="status">'+h(notice)+'</div>':'';
   notice='';
-  shell(flash+'<div class="small">CALCOLATORE CORPOREO</div><h1>'+title+'</h1><p class="muted">'+msg+'</p>'+
-    '<form id="measurement"><section class="panel"><h3>Informazioni personali</h3><div class="two">'+
+  shell(flash+'<div class="page-heading"><div class="small">IL TUO PERCORSO BENESSERE</div><h1>'+title+'</h1><p class="muted">'+msg+'</p></div>'+
+    '<form id="measurement"><section class="panel form-panel"><div class="section-heading"><span class="section-icon section-icon-rose">'+icon('user',20)+'</span><div><span class="section-step">PASSAGGIO 01</span><h3>Informazioni personali</h3></div></div><div class="two">'+
     '<label>Altezza (cm)<input name="height" type="number" step=".1" min="100" max="250" inputmode="decimal" required placeholder="180" value="'+h(height)+'"></label>'+
     '<label>Età (anni)<input name="age" type="number" step="1" min="18" max="120" inputmode="numeric" required placeholder="22" value="'+h(age)+'"></label></div>'+
     '<label>Sesso per la formula<select name="sex" required><option value="" '+(!sex?'selected':'')+'>Seleziona</option><option value="male" '+(male?'selected':'')+'>Uomo</option><option value="female" '+(female?'selected':'')+'>Donna</option></select></label>'+
     '<p class="help">L’età serve a contestualizzare i risultati; non cambia le formule BMI e US Navy. Le categorie BMI qui sono per adulti.</p></section>'+
-    '<section class="panel"><h3>Misurazione attuale</h3><div class="two">'+
+    '<section class="panel form-panel"><div class="section-heading"><span class="section-icon section-icon-sage">'+icon('ruler',20)+'</span><div><span class="section-step">PASSAGGIO 02</span><h3>Misurazione attuale</h3></div></div><div class="two">'+
     '<label>Data<input name="date" type="date" required value="'+h(x.date||today())+'"></label>'+
     '<label>Peso (kg)<input name="weight" type="number" step=".1" min="10" max="500" inputmode="decimal" required placeholder="85,5" value="'+h(x.weight??'')+'"></label></div>'+
     '<div class="mode-heading"><strong>Modalità di misurazione</strong><span>Per le circonferenze</span></div>'+
@@ -120,8 +146,8 @@ function measure(){
     fieldInputs(x,sex,mode,'waist','Vita',female,'Nel punto più stretto. Serve al rapporto vita/altezza; per l’uomo non cambia la stima US Navy.')+
     (female?fieldInputs(x,sex,mode,'hip','Fianchi',true,'Nel punto di maggiore circonferenza dei glutei.'):'')+
     (!sex?'<p class="help">Seleziona uomo o donna per vedere le circonferenze richieste dalla formula.</p>':'')+
-    '<details class="guide-details"><summary>📏 Dove devo posizionare il metro?</summary><img src="guida-misure.svg" alt="Quattro illustrazioni: collo sotto la laringe, addome all’ombelico, vita nel punto più stretto, fianchi nel punto più ampio" loading="lazy"><p class="help">Mantieni il metro orizzontale, aderente senza stringere. <button class="text-link" type="button" data-tab="guide">Apri la guida completa</button></p></details></section>'+
-    '<button type="submit" class="primary">Calcola i risultati</button></form>');
+    '<details class="guide-details"><summary><span class="summary-icon">'+icon('ruler',18)+'</span><span>Dove devo posizionare il metro?</span><span class="summary-arrow">⌄</span></summary><img src="guida-misure.svg" alt="Quattro illustrazioni: collo sotto la laringe, addome all’ombelico, vita nel punto più stretto, fianchi nel punto più ampio" loading="lazy"><p class="help">Mantieni il metro orizzontale, aderente senza stringere. <button class="text-link" type="button" data-tab="guide">Apri la guida completa</button></p></details></section>'+
+    '<button type="submit" class="primary submit-calc"><span>'+icon('calculator',20)+' Calcola i risultati</span>'+icon('arrow',19)+'</button></form>');
 }
 function result(){
   const e=pending,c=calc(e),v=Number.isFinite(c.fat)&&c.fat>=0&&c.fat<=70;
@@ -138,18 +164,18 @@ function result(){
   const precision=e.mode==='accurate'?'<p class="help">Le circonferenze sono medie di tre letture; questo riduce gli errori casuali ma non elimina quelli sistematici.</p>'+
     (warnings.length?'<div class="quality-warning">Controlla le letture di '+warnings.map(r=>r.label.toLowerCase()).join(', ')+': differiscono di oltre 1 cm. Puoi modificarle prima di archiviare.</div>':
     '<div class="quality-good">Le tre letture di ogni circonferenza richiesta differiscono al massimo di 1 cm.</div>'):'<p class="help">Misurazione standard: una lettura per circonferenza.</p>';
-  shell('<div class="small">RISULTATO · '+(editing?'MODIFICHE NON CONFERMATE':'NON ARCHIVIATO')+'</div><h1>Il tuo risultato</h1><p class="muted">'+h(e.date)+' · '+(male?'Uomo':'Donna')+' · '+fmt(e.age,0)+' anni · '+fmt(e.height,0)+' cm</p>'+
-    '<div class="weight">'+fmt(e.weight)+' kg</div>'+
-    '<div class="grid">'+card('BMI',fmt(c.bmi,2),bmiLabel(c.bmi))+
+  shell('<div class="page-heading"><div class="small">ANALISI CORPOREA</div><h1>Il tuo risultato</h1><p class="muted">'+h(e.date)+' · '+(male?'Uomo':'Donna')+' · '+fmt(e.age,0)+' anni · '+fmt(e.height,0)+' cm</p></div>'+
+    '<section class="result-hero"><div class="hero-top"><span class="hero-eyebrow">'+icon('ruler',16)+' PESO REGISTRATO</span><span class="hero-state">'+(editing?'Da confermare':'Non archiviato')+'</span></div><div class="weight">'+fmt(e.weight)+' <small>kg</small></div><div class="hero-bottom">'+icon('heart',16)+' Il tuo punto di partenza, oggi.</div></section>'+
+    '<div class="grid results-grid">'+card('BMI',fmt(c.bmi,2),bmiLabel(c.bmi))+
     card('Massa grassa',v?fmt(c.fat)+'%':'—',v?fmt(c.fatKg)+' kg stimati':'Stima non disponibile')+
     card('Massa magra',v?fmt(c.lean)+' kg':'—','Massa non grassa stimata')+
     card('Vita / altezza',Number.isFinite(c.ratio)?fmt(c.ratio,3):'—',Number.isFinite(c.ratio)?'Rapporto orientativo':'Aggiungi la vita per calcolarlo')+'</div>'+
     '<section class="panel"><h3>Composizione corporea</h3>'+
     (v?'<div class="bar"><span class="lean" style="width:'+(100-c.fat)+'%"></span><span class="fat" style="width:'+c.fat+'%"></span></div><div class="legend"><span>'+fmt(100-c.fat)+'% massa magra</span><span>'+fmt(c.fat)+'% grassa</span></div>':'<p class="help">Stima non disponibile.</p>')+
     '<p class="note">Massa grassa stimata con formula US Navy; il rapporto vita/altezza utilizza la vita, non la misura dell’addome all’ombelico.</p></section>'+
-    '<div class="decision-panel"><h3>Vuoi conservare questa misurazione?</h3><p class="help">Solo scegliendo Archivia comparirà nello storico e nelle statistiche.</p><div class="decision-actions">'+
+    '<div class="decision-panel"><div class="decision-icon">'+icon('archive',22)+'</div><h3>Vuoi conservare questa misurazione?</h3><p class="help">Solo scegliendo Archivia comparirà nello storico e nelle statistiche.</p><div class="decision-actions">'+
     '<button type="button" class="secondary" data-action="discard">'+(editing?'Annulla modifiche':'Non archiviare')+'</button>'+
-    '<button type="button" class="primary" data-action="archive">'+(editing?'Aggiorna archivio':'Archivia')+'</button></div>'+
+    '<button type="button" class="primary" data-action="archive">'+icon('check',17)+' '+(editing?'Aggiorna archivio':'Archivia')+'</button></div>'+
     '<button type="button" class="text-link revise" data-action="revise">Modifica i dati inseriti</button></div>'+
     '<section class="panel"><h3>Dettaglio delle misure</h3><div class="measurement-detail-grid">'+measured+'</div>'+precision+
     '<p class="note">L’età non modifica le formule. Le percentuali non sono misure cliniche; anche con tre letture resta un margine d’errore del metodo.</p></section>'+
