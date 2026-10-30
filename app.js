@@ -123,17 +123,35 @@ function measure(){
 }
 function result(){
   const e=pending,c=calc(e),v=Number.isFinite(c.fat)&&c.fat>=0&&c.fat<=70;
+  const male=e.sex==='male';
   const card=(title,value,sub)=>'<div class="card"><div class="small">'+title+'</div><div class="value">'+value+'</div><div class="caption">'+sub+'</div></div>';
-  shell('<div class="small">MISURAZIONE ATTUALE · NON ANCORA ARCHIVIATA</div><h1>Il tuo risultato</h1><p class="muted">'+h(e.date)+' · '+(e.sex==='female'?'Donna':'Uomo')+' · '+fmt(num(e.height),0)+' cm</p>'+
-    '<div class="weight">'+fmt(num(e.weight))+' kg</div>'+
-    '<div class="grid">'+card('BMI',fmt(c.bmi,2),bmiLabel(c.bmi))+card('Massa grassa',v?fmt(c.fat)+'%':'—',v?fmt(c.fatKg)+' kg stimati':'Stima non disponibile')+
-    card('Massa magra',v?fmt(c.lean)+' kg':'—','Massa non grassa stimata')+card('Vita / altezza',fmt(c.ratio,3),'Rapporto')+'</div>'+
-    '<section class="panel"><h3>Composizione corporea</h3>'+(v?'<div class="bar"><span class="lean" style="width:'+(100-c.fat)+'%"></span><span class="fat" style="width:'+c.fat+'%"></span></div><div class="legend"><span>'+fmt(100-c.fat)+'% massa magra</span><span>'+fmt(c.fat)+'% grassa</span></div>':'<p class="help">Stima non disponibile.</p>')+'</section>'+
+  const labels={neck:'Collo',abdomen:'Addome',waist:'Vita',hip:'Fianchi'};
+  const fields=male?['neck','abdomen','waist']:['neck','waist','hip'];
+  const measured=fields.filter(k=>Number.isFinite(c[k])&&c[k]>0).map(k=>'<div class="measurement-detail"><span>'+labels[k]+'</span><strong>'+fmt(c[k])+' cm</strong></div>').join('');
+  const ranges=e.mode==='accurate'?fields.filter(k=>Array.isArray(e.samples?.[k])&&e.samples[k].length===3).map(k=>{
+    const values=e.samples[k],spread=Math.max(...values)-Math.min(...values);
+    return {label:labels[k],spread};
+  }):[];
+  const warnings=ranges.filter(r=>r.spread>1);
+  const precision=e.mode==='accurate'?'<p class="help">Le circonferenze sono medie di tre letture; questo riduce gli errori casuali ma non elimina quelli sistematici.</p>'+
+    (warnings.length?'<div class="quality-warning">Controlla le letture di '+warnings.map(r=>r.label.toLowerCase()).join(', ')+': differiscono di oltre 1 cm. Puoi modificarle prima di archiviare.</div>':
+    '<div class="quality-good">Le tre letture di ogni circonferenza richiesta differiscono al massimo di 1 cm.</div>'):'<p class="help">Misurazione standard: una lettura per circonferenza.</p>';
+  shell('<div class="small">RISULTATO · '+(editing?'MODIFICHE NON CONFERMATE':'NON ARCHIVIATO')+'</div><h1>Il tuo risultato</h1><p class="muted">'+h(e.date)+' · '+(male?'Uomo':'Donna')+' · '+fmt(e.age,0)+' anni · '+fmt(e.height,0)+' cm</p>'+
+    '<div class="weight">'+fmt(e.weight)+' kg</div>'+
+    '<div class="grid">'+card('BMI',fmt(c.bmi,2),bmiLabel(c.bmi))+
+    card('Massa grassa',v?fmt(c.fat)+'%':'—',v?fmt(c.fatKg)+' kg stimati':'Stima non disponibile')+
+    card('Massa magra',v?fmt(c.lean)+' kg':'—','Massa non grassa stimata')+
+    card('Vita / altezza',Number.isFinite(c.ratio)?fmt(c.ratio,3):'—',Number.isFinite(c.ratio)?'Rapporto orientativo':'Aggiungi la vita per calcolarlo')+'</div>'+
+    '<section class="panel"><h3>Composizione corporea</h3>'+
+    (v?'<div class="bar"><span class="lean" style="width:'+(100-c.fat)+'%"></span><span class="fat" style="width:'+c.fat+'%"></span></div><div class="legend"><span>'+fmt(100-c.fat)+'% massa magra</span><span>'+fmt(c.fat)+'% grassa</span></div>':'<p class="help">Stima non disponibile.</p>')+
+    '<p class="note">Massa grassa stimata con formula US Navy; il rapporto vita/altezza utilizza la vita, non la misura dell’addome all’ombelico.</p></section>'+
     '<div class="decision-panel"><h3>Vuoi conservare questa misurazione?</h3><p class="help">Solo scegliendo Archivia comparirà nello storico e nelle statistiche.</p><div class="decision-actions">'+
     '<button type="button" class="secondary" data-action="discard">'+(editing?'Annulla modifiche':'Non archiviare')+'</button>'+
     '<button type="button" class="primary" data-action="archive">'+(editing?'Aggiorna archivio':'Archivia')+'</button></div>'+
     '<button type="button" class="text-link revise" data-action="revise">Modifica i dati inseriti</button></div>'+
-    bmiPanel(e,c)+'<p class="note">Massa grassa e massa magra sono stime antropometriche, non misurazioni cliniche. La massa magra comprende anche acqua, ossa e organi.</p>');
+    '<section class="panel"><h3>Dettaglio delle misure</h3><div class="measurement-detail-grid">'+measured+'</div>'+precision+
+    '<p class="note">L’età non modifica le formule. Le percentuali non sono misure cliniche; anche con tre letture resta un margine d’errore del metodo.</p></section>'+
+    bmiPanel(e,c)+'<p class="note">La massa magra comprende anche acqua, ossa e organi. Il BMI non distingue muscoli e grasso: i range di peso non sono prescrizioni individuali.</p>');
 }
 function guide(){
   shell('<div class="small">GUIDA VISIVA</div><h1>Dove prendere le misure</h1><p class="muted">Usa un metro morbido e tienilo parallelo al pavimento, aderente ma senza comprimere la pelle.</p>'+
@@ -149,13 +167,36 @@ function archive(){
   const a=ordered();
   shell('<h1>Archivio</h1><p class="muted">'+a.length+' misurazion'+(a.length===1?'e':'i')+' archiviate</p>'+
     '<div class="row"><button class="secondary" data-action="export">Esporta JSON</button><button class="secondary" data-action="import">Importa backup</button></div><input hidden id="import-file" type="file" accept="application/json">'+
-    '<section class="panel">'+(a.length?a.map(e=>{const c=calc(e);return '<div class="entry"><div class="entryhead"><strong>'+h(e.date)+'</strong><span class="pill">'+fmt(num(e.weight))+' kg</span></div>'+
-    '<p class="help">BMI '+fmt(c.bmi,2)+' · Grasso '+fmt(c.fat)+'% · Massa magra '+fmt(c.lean)+' kg</p>'+
-    '<div class="actions"><button class="secondary" data-edit="'+h(e.id)+'">Modifica</button><button class="danger" data-delete="'+h(e.id)+'">Elimina</button></div></div>'}).join(''):'<div class="empty">Nessuna misurazione archiviata.</div>')+
+    '<section class="panel">'+(a.length?a.map(e=>{
+      const c=calc(e),sex=e.sex||state.profile.sex;
+      return '<div class="entry"><div class="entryhead"><strong>'+h(e.date)+'</strong><span class="pill">'+fmt(num(e.weight))+' kg</span></div>'+
+        '<p class="help">BMI '+fmt(c.bmi,2)+' · Grasso '+fmt(c.fat)+'% · Massa magra '+fmt(c.lean)+' kg</p>'+
+        '<p class="entry-meta">'+(sex==='female'?'Donna':'Uomo')+' · '+(e.mode==='accurate'?'3 misure / media':'Standard')+
+        (Number.isFinite(num(e.age))&&num(e.age)>0?' · '+fmt(num(e.age),0)+' anni':'')+'</p>'+
+        '<div class="actions"><button class="secondary" data-edit="'+h(e.id)+'">Modifica</button><button class="danger" data-delete="'+h(e.id)+'">Elimina</button></div></div>';
+    }).join(''):'<div class="empty">Nessuna misurazione archiviata.</div>')+
     '</section><button class="primary" data-action="new">＋ Nuova misurazione</button>');
 }
 function graph(data,key){if(data.length<2)return '<div class="empty">Servono almeno due misurazioni per visualizzare il grafico.</div>';const w=320,H=150,p=20,vals=data.map(x=>x[key]),lo=Math.min(...vals),hi=Math.max(...vals),pad=Math.max((hi-lo)*.18,key==='fat'?1:.5),min=lo-pad,max=hi+pad;const pts=data.map((x,i)=>[p+i*(w-2*p)/(data.length-1),H-p-(x[key]-min)/(max-min)*(H-2*p)]);return '<svg class="chart" viewBox="0 0 320 175" role="img" aria-label="Grafico storico '+h(key)+'"><path d="M20 20 V130 H300" fill="none" stroke="#e6d0d9" stroke-width="1"/><polyline points="'+pts.map(p=>p.join(',')).join(' ')+'" fill="none" stroke="#b3456e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+pts.map(p=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.5" fill="#b3456e"/>').join('')+'<text x="20" y="166" fill="#786572" font-size="12">'+h(data[0].date)+'</text><text x="300" y="166" text-anchor="end" fill="#786572" font-size="12">'+h(data[data.length-1].date)+'</text></svg>'}
-function stats(){const now=new Date(),months={m1:30,m3:90,m6:180,y1:365,all:Infinity};const data=ordered().filter(e=>{const days=(now-new Date(e.date+'T12:00:00'))/86400000;return days<=months[period]&&days>=-1}).reverse().map(e=>({...e,...calc(e),weight:num(e.weight)}));const valid=data.filter(x=>Number.isFinite(x[metric])&&(metric!=='fat'||x.fat>=0&&x.fat<=70));const filters=[['m1','30g'],['m3','3 mesi'],['m6','6 mesi'],['y1','1 anno'],['all','Tutto']];shell('<h1>Statistiche</h1><p class="muted">Segui nel tempo il tuo percorso.</p><div class="filters">'+filters.map(x=>'<button class="'+(period===x[0]?'selected':'')+'" data-period="'+x[0]+'">'+x[1]+'</button>').join('')+'</div><label>Parametro<select id="metric"><option value="weight" '+(metric==='weight'?'selected':'')+'>Peso (kg)</option><option value="bmi" '+(metric==='bmi'?'selected':'')+'>BMI</option><option value="fat" '+(metric==='fat'?'selected':'')+'>Massa grassa (%)</option><option value="lean" '+(metric==='lean'?'selected':'')+'>Massa magra (kg)</option><option value="waist" '+(metric==='waist'?'selected':'')+'>Vita / addome (cm)</option></select></label><section class="panel"><h3>Andamento</h3>'+graph(valid,metric)+'</section>'+(valid.length>1?'<div class="panel row"><span class="muted">Variazione nel periodo</span><strong>'+fmt(valid[valid.length-1][metric]-valid[0][metric],2)+'</strong></div>':'')+'<p class="note">Le stime dipendono anche dalla precisione e dalla coerenza delle misurazioni.</p>')}
+function stats(){
+  const now=new Date(),months={m1:30,m3:90,m6:180,y1:365,all:Infinity};
+  const data=ordered().filter(e=>{
+    const days=(now-new Date(e.date+'T12:00:00'))/86400000;
+    return days<=months[period]&&days>=-1;
+  }).reverse().map(e=>({...e,...calc(e),weight:num(e.weight)}));
+  const valid=data.filter(x=>Number.isFinite(x[metric])&&(metric!=='fat'||x.fat>=0&&x.fat<=70));
+  const filters=[['m1','30g'],['m3','3 mesi'],['m6','6 mesi'],['y1','1 anno'],['all','Tutto']];
+  const options=[
+    ['weight','Peso (kg)'],['bmi','BMI'],['fat','Massa grassa (%)'],['lean','Massa magra (kg)'],
+    ['waist','Vita (cm)'],['abdomen','Addome (cm)'],['hip','Fianchi (cm)'],['neck','Collo (cm)'],['ratio','Vita / altezza']
+  ];
+  shell('<h1>Statistiche</h1><p class="muted">Segui nel tempo le misurazioni che hai scelto di archiviare.</p>'+
+    '<div class="filters">'+filters.map(x=>'<button class="'+(period===x[0]?'selected':'')+'" data-period="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
+    '<label>Parametro<select id="metric">'+options.map(x=>'<option value="'+x[0]+'" '+(metric===x[0]?'selected':'')+'>'+x[1]+'</option>').join('')+'</select></label>'+
+    '<section class="panel"><h3>Andamento</h3>'+graph(valid,metric)+'</section>'+
+    (valid.length>1?'<div class="panel row"><span class="muted">Variazione nel periodo</span><strong>'+fmt(valid[valid.length-1][metric]-valid[0][metric],metric==='ratio'?3:2)+'</strong></div>':'')+
+    '<p class="note">Le misurazioni storiche precedenti alla v1.4 possono non avere vita distinta dall’addome. In quel caso il grafico della vita non mostra quei dati, per evitare confronti non omogenei.</p>');
+}
 function render(){if(tab==='home')home();else if(tab==='archive')archive();else if(tab==='stats')stats();else guide()}
 function captureDraft(){
   const form=document.getElementById('measurement');
