@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 760" role="img" aria-labelledby="title desc">
+<title id="title">Guida illustrata alle circonferenze corporee</title>
+<desc id="desc">Quattro figure indicano dove posizionare il metro per collo, addome all'ombelico, vita nel punto più stretto e fianchi nel punto più ampio.</desc>
+<defs>
+  <linearGradient id="card" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#fff7f9"/></linearGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#efd3cf"/><stop offset="1" stop-color="#e4bdbb"/></linearGradient>
+</defs>
+<rect width="730" height="760" rx="32" fill="#fcf3f6"/>
+<g transform="translate(20 20)">
+<rect width="330" height="350" rx="25" fill="url(#card)" stroke="#efdde4" stroke-width="2"/>
+<text x="20" y="37" font-family="Arial,sans-serif" font-weight="700" font-size="18" fill="#793a56">01  COLLO</text>
+<text x="20" y="59" font-family="Arial,sans-serif" font-size="13" fill="#786875">Sotto la laringe</text>
+<ellipse cx="165" cy="126" rx="27" ry="33" fill="url(#body)" stroke="#d9acaa" stroke-width="2"/>
+<path d="M145 151 L143 162 Q120 165 110 177 Q98 191 103 210 L114 241 Q120 257 110 282 Q103 301 111 326 L141 326 Q147 307 159 294 L171 294 Q182 308 189 326 L219 326 Q227 301 220 282 Q210 256 216 241 L227 210 Q233 191 220 177 Q210 165 187 162 L185 151 Q168 158 145 151Z" fill="url(#body)" stroke="#d9acaa" stroke-width="2"/>
+<path d="M144 163 Q165 179 186 163" fill="none" stroke="#d8aaa8" stroke-width="2"/>
+<path d="M165 190 L165 285" stroke="#d5a8a8" stroke-opacity=".4" stroke-width="1.5" stroke-dasharray="4 7"/>
+<circle cx="165" cy="253" r="2.5" fill="#c89b99"/>
+<path d="M 142 153 Q 164 160 188 153" fill="none" stroke="#fffafc" stroke-width="13" stroke-linecap="round"/>
+<path d="M 142 153 Q 164 160 188 153" fill="none" stroke="#b4456d" stroke-width="7" stroke-linecap="round"/>
+<circle cx="166" cy="157" r="5" fill="#fff" stroke="#b4456d" stroke-width="2"/>
+</g>
+<g transform="translate(380 20)">
+<rect width="330" height="350" rx="25" fill="url(#card)" stroke="#efdde4" stroke-width="2"/>
+<text x="20" y="37" font-family="Arial,sans-serif" font-weight="700" font-size="18" fill="#793a56">02  ADDOME</text>
+<text x="20" y="59" font-family="Arial,sans-serif" font-size="13" fill="#786875">All’altezza dell’ombelico</text>
+<ellipse cx="165" cy="126" rx="27" ry="33" fill="url(#body)" stroke="#d9acaa" stroke-width="2"/>
+<path d="M145 151 L143 162 Q120 165 110 177 Q98 191 103 210 L114 241 Q120 257 110 282 Q103 301 111 326 L141 326 Q147 307 159 294 L171 294 Q182 308 189 326 L219 326 Q227 301 220 282 Q210 256 216 241 L227 210 Q233 191 220 177 Q210 165 187 162 L185 151 Q168 158 145 151Z" fill="url(#body)" stroke="#d9acaa" stroke-width="2"/>
+<path d="M144 163 Q165 179 186 163" fill="none" stroke="#d8aaa8" stroke-width="2"/>
+<path d="M165 190 L165 285" stroke="#d5a8a8" stroke-opacity=".4" stroke-width="1.5" stroke-dasharray="4 7"/>
+<circle cx="165" cy="253" r="2.5" fill="#c89b99"/>
+<path d="M 112 253 Q 165 263 218 253" fill="none" stroke="#fffafc" stroke-width="13" stroke-linecap="round"/>
+<path d="M 112 253 Q 165 263 218 253" fill="none" stroke="#b4456d" stroke-width="7" stroke-linecap="round"/>
+<circle cx="165" cy="259" r="5" fill="#fff" stroke="#b4456d" stroke-width="2"/>
+</g>
+<g transform="translate(20 390)">
+<rect width="330" height="350" rx="25" fill="url(#card)" stroke="#efdde4" stroke-width="2"/>
+<text x="20" y="37" font-family="Arial,sans-serif" font-weight="700" font-size="18" fill="#793a56">03  VITA</text>
+<text x="20" y="59" font-family="Arial,sans-serif" font-size="13" fill="#786875">Nel punto più stretto</text>
+<ellipse cx="165" cy="126" rx="27" ry="33" fill="url(#body)" stroke="#d9acaa" stroke-width="2"/>
+<path d="M145 151 L143 162 Q120 165 110 177 Q98 191 103 210 L114 241 Q120 257 110 282 Q103 301 111 326 L141 326 Q147 307 159 294 L171 294 Q182 308 189 326 L219 326 Q227 301 220 282 Q210 256 216 241 L227 210 Q233 191 220 177 Q210 165 187 162 L185 151 Q168 158 145 151Z" fill="url(#body)" stroke="#d9acaa" stroke-width="2"/>
+<path d="M144 163 Q165 179 186 163" fill="none" stroke="#d8aaa8" stroke-width="2"/>
+<path d="M165 190 L165 285" stroke="#d5a8a8" stroke-opacity=".4" stroke-width="1.5" stroke-dasharray="4 7"/>
+<circle cx="165" cy="253" r="2.5" fill="#c89b99"/>
+<path d="M 117 235 Q 165 244 213 235" fill="none" stroke="#fffafc" stroke-width="13" stroke-linecap="round"/>
+<path d="M 117 235 Q 165 244 213 235" fill="none" stroke="#b4456d" stroke-width="7" stroke-linecap="round"/>
+<circle cx="165" cy="241" r="5" fill="#fff" stroke="#b4456d" stroke-width="2"/>
+</g>
+<g transform="translate(380 390)">
+<rect width="330" height="350" rx="25" fill="url(#card)" stroke="#efdde4" stroke-width="2"/>
+<text x="20" y="37" font-family="Arial,sans-serif" font-weight="700" font-size="18" fill="#793a56">04  FIANCHI</text>
+<text x="20" y="59" font-family="Arial,sans-serif" font-size="13" fill="#786875">Nel punto più ampio</text>
+<ellipse cx="165" cy="126" rx="27" ry="33" fill="url(#body)" stroke="#d9acaa" stroke-width="2"/>
+<path d="M145 151 L143 162 Q120 165 110 177 Q98 191 103 210 L114 241 Q120 257 110 282 Q103 301 111 326 L141 326 Q147 307 159 294 L171 294 Q182 308 189 326 L219 326 Q227 301 220 282 Q210 256 216 241 L227 210 Q233 191 220 177 Q210 165 187 162 L185 151 Q168 158 145 151Z" fill="url(#body)" stroke="#d9acaa" stroke-width="2"/>
+<path d="M144 163 Q165 179 186 163" fill="none" stroke="#d8aaa8" stroke-width="2"/>
+<path d="M165 190 L165 285" stroke="#d5a8a8" stroke-opacity=".4" stroke-width="1.5" stroke-dasharray="4 7"/>
+<circle cx="165" cy="253" r="2.5" fill="#c89b99"/>
+<path d="M 108 283 Q 165 294 222 283" fill="none" stroke="#fffafc" stroke-width="13" stroke-linecap="round"/>
+<path d="M 108 283 Q 165 294 222 283" fill="none" stroke="#b4456d" stroke-width="7" stroke-linecap="round"/>
+<circle cx="165" cy="289" r="5" fill="#fff" stroke="#b4456d" stroke-width="2"/>
+</g>
+</svg>
