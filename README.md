@@ -1,27 +1,49 @@
-# BodyTrack 1.3
+# BodyTrack 1.4 — Calcolatore corporeo dettagliato
 
-PWA mobile-first per calcolare BMI, massa grassa stimata e massa magra, con archivio e statistiche.
+PWA mobile-first, con grafica chiara rosa cipria, per calcolare BMI, stima della composizione corporea, rapporto vita/altezza e tenere uno storico **solo delle misurazioni archiviate esplicitamente**.
 
-## Come funziona
+## Nuova Home
 
-1. Nella **Home**, inserisci direttamente altezza, sesso usato per la formula, peso e circonferenze. Non serve aprire impostazioni.
-2. Tocca **Calcola i risultati** per visualizzare BMI, massa grassa, massa magra e intervalli di peso per il BMI.
-3. Decidi **Archivia** oppure **Non archiviare**. Nessun risultato viene archiviato automaticamente.
-4. Solo le misurazioni archiviate compaiono nelle sezioni **Statistiche** e **Archivio**.
-5. Nella Home puoi aprire la guida illustrata alle misure; la guida completa è disponibile dall'icona in alto a destra.
+Il calcolatore si apre direttamente in Home. Inserisci:
 
-## Dati e backup
+- Altezza, **età adulta** (18–120 anni) e sesso usato per la formula.
+- Data e peso.
+- Circonferenza del collo.
+- **Uomo:** addome all'ombelico (obbligatorio per US Navy) e vita nel punto più stretto (facoltativa per il rapporto vita/altezza).
+- **Donna:** vita nel punto più stretto e fianchi nel punto più ampio (obbligatori per US Navy).
 
-I dati archiviati vengono conservati nel browser con `localStorage`. Le misurazioni non archiviate restano solo nella sessione corrente e si perdono ricaricando la pagina. Esporta periodicamente un backup JSON dall'Archivio; cancellare i dati del browser può eliminare lo storico. Il repository pubblico non contiene dati personali.
+Puoi scegliere la modalità **Standard**, una lettura per circonferenza, oppure **Accurata**, tre letture con **media automatica** e avviso se la differenza tra la più grande e la più piccola supera 1 cm. Le letture originali e le medie vengono conservate quando archivi la misurazione.
 
-Per misurazioni salvate nelle versioni precedenti, il calcolatore continua a usare il profilo storico quando mancano altezza e sesso nella singola registrazione. Le nuove registrazioni salvano altezza e sesso insieme alla misura.
+Il risultato mostra BMI a due decimali, categoria e fasce di peso per la tua altezza, massa grassa stimata (%) e in kg, massa non grassa stimata (kg), rapporto vita/altezza quando disponibile, dettagli delle misure e spiegazione dei metodi.
+
+**Non viene archiviato nulla automaticamente:** dopo ogni calcolo scegli **Archivia** oppure **Non archiviare**. Puoi modificare i dati prima di decidere.
+
+## Storico e privacy
+
+L'Archivio contiene le sole misurazioni confermate, modificabili ed eliminabili. Le Statistiche mostrano peso, BMI, stima massa grassa e magra, vita, addome, collo, fianchi e rapporto vita/altezza quando disponibili. La guida illustrata mostra dove prendere le misure.
+
+I dati restano nel browser in `localStorage`, non vengono caricati nella repository. Esporta periodicamente un backup JSON dall'Archivio. Le misurazioni non archiviate non vengono salvate e si perdono ricaricando la pagina.
+
+Le misurazioni delle versioni precedenti restano leggibili. Per i vecchi record maschili, il precedente campo `waist` rappresentava l'addome all'ombelico: viene usato per la stima US Navy, **non** confuso con la nuova misura della vita nel grafico o nel rapporto vita/altezza.
+
+## Precisione e limiti
+
+- BMI = peso / altezza², con altezza in metri. Le categorie riportate sono **per adulti**.
+- La stima del grasso corporeo usa la formula US Navy con circonferenze convertite in pollici e coefficienti distinti per uomo e donna.
+- La massa magra è la massa **non grassa**, non la sola massa muscolare.
+- Il rapporto vita/altezza è un indicatore orientativo; il riferimento di 0,50 non costituisce una diagnosi.
+- L'età non entra nelle formule BMI o US Navy.
+- Ripetere tre volte le circonferenze può ridurre l'errore casuale, ma non elimina l'errore sistematico né rende il risultato clinicamente preciso.
+
+Le stime non sostituiscono misurazioni cliniche o una valutazione professionale.
 
 ## Pubblicazione
 
 Repository → Settings → Pages → Deploy from a branch → `main` → `/(root)` → Save.
 
-## Metodo
+Apri GitHub Pages con Safari e scegli **Condividi → Aggiungi alla schermata Home**.
 
-Formula tradizionale US Navy (circonferenze convertite da cm a pollici), con formule separate per uomo e donna. Per l'uomo si misura l'addome all'ombelico; per la donna la vita nel punto più stretto e i fianchi nel punto più ampio. Le percentuali di massa grassa e magra sono **stime**, non esami diagnostici. La massa magra non indica soltanto muscoli.
+## Riferimenti
 
-Riferimenti: [US Coast Guard, Body Composition Standards Program](https://media.defense.gov/2025/Feb/07/2003642977/-1/-1/0/CI_1020_8I.PDF); [US Army, Body Fat Calculation](https://api.army.mil/e2/c/downloads/566092.pdf).
+- [US Coast Guard, Body Composition Standards Program](https://media.defense.gov/2025/Feb/07/2003642977/-1/-1/0/CI_1020_8I.PDF)
+- [US Army, Body Fat Calculation](https://api.army.mil/e2/c/downloads/566092.pdf)
