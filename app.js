@@ -10,7 +10,7 @@ function bmiLabel(b){return b<18.5?'Sottopeso':b<25?'Normopeso':b<30?'Sovrappeso
 function ordered(){return [...state.entries].sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created)}
 function el(){return document.getElementById('app')}
 function nav(){return '<nav class="bottom"><button data-tab="home" class="'+(tab==='home'?'active':'')+'"><b>⌂</b>Home</button><button data-tab="stats" class="'+(tab==='stats'?'active':'')+'"><b>▥</b>Statistiche</button><button data-tab="archive" class="'+(tab==='archive'?'active':'')+'"><b>▤</b>Archivio</button></nav>'}
-function shell(inner){el().innerHTML='<header class="top"><div class="brand"><span class="logo">♡</span>BodyTrack</div><button class="gear" data-tab="settings" aria-label="Impostazioni">⚙</button></header>'+inner+nav()}
+function shell(inner){el().innerHTML='<header class="top"><div class="brand"><span class="logo">♡</span>BodyTrack <span class="app-version">v1.2</span></div><button class="gear" data-tab="settings" aria-label="Impostazioni">⚙</button></header>'+inner+nav()}
 function bmiWeightFloor(bmi,h2){return Math.ceil((bmi*h2-1e-9)*10)/10}
 function bmiWeightCeiling(bmi,h2){return (Math.ceil((bmi*h2-1e-9)*10)-1)/10}
 function bmiPanel(entry,calculated){
