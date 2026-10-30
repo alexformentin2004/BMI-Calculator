@@ -189,7 +189,7 @@ function result(){
     '<p class="note">La massa magra comprende anche acqua, ossa e organi. Il BMI non distingue muscoli e grasso: i range di peso non sono prescrizioni individuali.</p>');
 }
 function guide(){
-  shell('<div class="small">GUIDA VISIVA</div><h1>Dove prendere le misure</h1><p class="muted">Usa un metro morbido e tienilo parallelo al pavimento, aderente ma senza comprimere la pelle.</p>'+
+  shell('<div class="page-heading"><div class="small">GUIDA VISIVA</div><h1>Dove prendere le misure</h1><p class="muted">Usa un metro morbido e tienilo parallelo al pavimento, aderente ma senza comprimere la pelle.</p></div>'+
     '<section class="panel guide-panel"><img src="guida-misure.svg" alt="Posizioni illustrate delle circonferenze di collo, addome, vita e fianchi" width="730" height="760">'+
     '<div class="guide-copy"><h3>Collo</h3><p>Misura appena sotto la laringe (pomo d’Adamo), mantenendo il metro orizzontale.</p>'+
     '<h3>Addome · formula uomo</h3><p>Misura all’altezza dell’ombelico, con l’addome rilassato, al termine di un’espirazione normale.</p>'+
@@ -200,19 +200,37 @@ function guide(){
 }
 function archive(){
   const a=ordered();
-  shell('<h1>Archivio</h1><p class="muted">'+a.length+' misurazion'+(a.length===1?'e':'i')+' archiviate</p>'+
-    '<div class="row"><button class="secondary" data-action="export">Esporta JSON</button><button class="secondary" data-action="import">Importa backup</button></div><input hidden id="import-file" type="file" accept="application/json">'+
-    '<section class="panel">'+(a.length?a.map(e=>{
+  shell('<div class="page-heading"><div class="small">IL TUO PERCORSO</div><h1>Archivio</h1><p class="muted">Tutte le misurazioni che hai scelto di conservare.</p></div>'+
+    '<section class="archive-summary"><span class="archive-summary-icon">'+icon('archive',24)+'</span><div><span>Misurazioni salvate</span><strong>'+a.length+'</strong></div><span class="archive-summary-caption">IL TUO STORICO</span></section>'+
+    '<div class="archive-toolbar"><button type="button" class="secondary" data-action="export">'+icon('download',17)+' Esporta</button><button type="button" class="secondary" data-action="import">'+icon('upload',17)+' Importa</button></div><input hidden id="import-file" type="file" accept="application/json">'+
+    '<section class="archive-list">'+(a.length?a.map(e=>{
       const c=calc(e),sex=e.sex||state.profile.sex;
-      return '<div class="entry"><div class="entryhead"><strong>'+h(e.date)+'</strong><span class="pill">'+fmt(num(e.weight))+' kg</span></div>'+
-        '<p class="help">BMI '+fmt(c.bmi,2)+' · Grasso '+fmt(c.fat)+'% · Massa magra '+fmt(c.lean)+' kg</p>'+
-        '<p class="entry-meta">'+(sex==='female'?'Donna':'Uomo')+' · '+(e.mode==='accurate'?'3 misure / media':'Standard')+
+      return '<article class="entry"><div class="entryhead"><div class="entry-date"><span class="entry-date-icon">'+icon('calendar',17)+'</span><strong>'+h(e.date)+'</strong></div><span class="pill">'+fmt(num(e.weight))+' kg</span></div>'+
+        '<div class="entry-metrics"><span><small>BMI</small><strong>'+fmt(c.bmi,2)+'</strong></span><span><small>Grasso stimato</small><strong>'+fmt(c.fat)+'%</strong></span><span><small>Massa magra</small><strong>'+fmt(c.lean)+' kg</strong></span></div>'+
+        '<p class="entry-meta">'+(sex==='female'?'Donna':'Uomo')+' · '+(e.mode==='accurate'?'Modalità accurata':'Standard')+
         (Number.isFinite(num(e.age))&&num(e.age)>0?' · '+fmt(num(e.age),0)+' anni':'')+'</p>'+
-        '<div class="actions"><button class="secondary" data-edit="'+h(e.id)+'">Modifica</button><button class="danger" data-delete="'+h(e.id)+'">Elimina</button></div></div>';
-    }).join(''):'<div class="empty">Nessuna misurazione archiviata.</div>')+
-    '</section><button class="primary" data-action="new">＋ Nuova misurazione</button>');
+        '<div class="actions"><button type="button" class="secondary" data-edit="'+h(e.id)+'">Modifica</button><button type="button" class="danger" data-delete="'+h(e.id)+'">Elimina</button></div></article>';
+    }).join(''):'<div class="empty archive-empty"><span class="empty-icon">'+icon('archive',30)+'</span><strong>Il tuo percorso inizia qui</strong><p>Le misurazioni compariranno quando sceglierai di archiviarle.</p></div>')+
+    '</section><button type="button" class="primary submit-calc" data-action="new"><span>'+icon('plus',19)+' Nuova misurazione</span>'+icon('arrow',19)+'</button>');
 }
-function graph(data,key){if(data.length<2)return '<div class="empty">Servono almeno due misurazioni per visualizzare il grafico.</div>';const w=320,H=150,p=20,vals=data.map(x=>x[key]),lo=Math.min(...vals),hi=Math.max(...vals),pad=Math.max((hi-lo)*.18,key==='fat'?1:.5),min=lo-pad,max=hi+pad;const pts=data.map((x,i)=>[p+i*(w-2*p)/(data.length-1),H-p-(x[key]-min)/(max-min)*(H-2*p)]);return '<svg class="chart" viewBox="0 0 320 175" role="img" aria-label="Grafico storico '+h(key)+'"><path d="M20 20 V130 H300" fill="none" stroke="#e6d0d9" stroke-width="1"/><polyline points="'+pts.map(p=>p.join(',')).join(' ')+'" fill="none" stroke="#b3456e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+pts.map(p=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.5" fill="#b3456e"/>').join('')+'<text x="20" y="166" fill="#786572" font-size="12">'+h(data[0].date)+'</text><text x="300" y="166" text-anchor="end" fill="#786572" font-size="12">'+h(data[data.length-1].date)+'</text></svg>'}
+function graph(data,key){
+  if(data.length<2)return '<div class="empty chart-empty"><span class="empty-icon">'+icon('chart',28)+'</span><strong>Servono almeno due misurazioni</strong><p>Archivia una seconda misurazione per vedere il tuo andamento.</p></div>';
+  const w=340,H=186,left=12,right=328,top=16,bottom=146;
+  const vals=data.map(x=>x[key]),lo=Math.min(...vals),hi=Math.max(...vals);
+  const padding=Math.max((hi-lo)*.18,key==='ratio'?.02:key==='fat'?1:.5),min=lo-padding,max=hi+padding;
+  const pts=data.map((x,i)=>[left+i*(right-left)/(data.length-1),bottom-(x[key]-min)/(max-min)*(bottom-top)]);
+  const path=pts.reduce((d,p,i)=>{
+    if(i===0)return 'M'+p[0].toFixed(1)+' '+p[1].toFixed(1);
+    const prev=pts[i-1],mid=(prev[0]+p[0])/2;
+    return d+' C'+mid.toFixed(1)+' '+prev[1].toFixed(1)+' '+mid.toFixed(1)+' '+p[1].toFixed(1)+' '+p[0].toFixed(1)+' '+p[1].toFixed(1);
+  },'');
+  const area=path+' L'+right+' '+bottom+' L'+left+' '+bottom+' Z';
+  const dates=pts.map((p,i)=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(i===pts.length-1?'5':'3.2')+'" fill="'+(i===pts.length-1?'#ac466b':'#ffffff')+'" stroke="#ac466b" stroke-width="2"/>').join('');
+  return '<svg class="chart" viewBox="0 0 340 186" role="img" aria-label="Grafico storico '+h(key)+'"><defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c66e8e" stop-opacity=".26"/><stop offset="100%" stop-color="#c66e8e" stop-opacity="0"/></linearGradient></defs>'+
+    [top,(top+bottom)/2,bottom].map(y=>'<path d="M'+left+' '+y+' H'+right+'" fill="none" stroke="#f0e6ea" stroke-dasharray="4 6"/>').join('')+
+    '<path d="'+area+'" fill="url(#chartFill)"/><path d="'+path+'" fill="none" stroke="#ac466b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+dates+
+    '<text x="'+left+'" y="177" fill="#8d7d88" font-size="11">'+h(data[0].date)+'</text><text x="'+right+'" y="177" text-anchor="end" fill="#8d7d88" font-size="11">'+h(data[data.length-1].date)+'</text></svg>';
+}
 function stats(){
   const now=new Date(),months={m1:30,m3:90,m6:180,y1:365,all:Infinity};
   const data=ordered().filter(e=>{
@@ -225,12 +243,17 @@ function stats(){
     ['weight','Peso (kg)'],['bmi','BMI'],['fat','Massa grassa (%)'],['lean','Massa magra (kg)'],
     ['waist','Vita (cm)'],['abdomen','Addome (cm)'],['hip','Fianchi (cm)'],['neck','Collo (cm)'],['ratio','Vita / altezza']
   ];
-  shell('<h1>Statistiche</h1><p class="muted">Segui nel tempo le misurazioni che hai scelto di archiviare.</p>'+
-    '<div class="filters">'+filters.map(x=>'<button class="'+(period===x[0]?'selected':'')+'" data-period="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
-    '<label>Parametro<select id="metric">'+options.map(x=>'<option value="'+x[0]+'" '+(metric===x[0]?'selected':'')+'>'+x[1]+'</option>').join('')+'</select></label>'+
-    '<section class="panel"><h3>Andamento</h3>'+graph(valid,metric)+'</section>'+
-    (valid.length>1?'<div class="panel row"><span class="muted">Variazione nel periodo</span><strong>'+fmt(valid[valid.length-1][metric]-valid[0][metric],metric==='ratio'?3:2)+'</strong></div>':'')+
-    '<p class="note">Le misurazioni storiche precedenti alla v1.4 possono non avere vita distinta dall’addome. In quel caso il grafico della vita non mostra quei dati, per evitare confronti non omogenei.</p>');
+  const selectedLabel=options.find(x=>x[0]===metric)?.[1]||'Parametro';
+  const latest=valid.length?valid[valid.length-1][metric]:NaN;
+  const delta=valid.length>1?latest-valid[0][metric]:NaN;
+  const digits=metric==='ratio'?3:metric==='bmi'?2:1;
+  shell('<div class="page-heading"><div class="small">I TUOI PROGRESSI</div><h1>Statistiche</h1><p class="muted">Uno sguardo chiaro all’evoluzione delle tue misurazioni.</p></div>'+
+    '<div class="filters" aria-label="Periodo">'+filters.map(x=>'<button type="button" class="'+(period===x[0]?'selected':'')+'" data-period="'+x[0]+'" aria-pressed="'+(period===x[0])+'">'+x[1]+'</button>').join('')+'</div>'+
+    '<section class="panel stats-panel"><label class="metric-select">Parametro da visualizzare<select id="metric">'+options.map(x=>'<option value="'+x[0]+'" '+(metric===x[0]?'selected':'')+'>'+x[1]+'</option>').join('')+'</select></label>'+
+    '<div class="stat-summary"><div><span class="stat-summary-label">ULTIMO VALORE · '+h(selectedLabel)+'</span><strong>'+fmt(latest,digits)+'</strong></div>'+
+    '<span class="stat-delta'+(Number.isFinite(delta)&&delta<0?' is-negative':'')+'">'+(Number.isFinite(delta)?(delta>0?'+':'')+fmt(delta,digits):'—')+' <small>nel periodo</small></span></div>'+
+    '<div class="chart-wrap">'+graph(valid,metric)+'</div></section>'+
+    '<p class="note">Le misurazioni precedenti alla v1.4 potrebbero non avere la vita distinta dall’addome. I dati mancanti non vengono interpretati come zero.</p>');
 }
 function render(){if(tab==='home')home();else if(tab==='archive')archive();else if(tab==='stats')stats();else guide()}
 function captureDraft(){
