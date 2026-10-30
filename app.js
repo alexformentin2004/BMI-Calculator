@@ -7,10 +7,11 @@ function num(x){return Number(String(x??'').replace(',','.'))}
 function fmt(x,d=1){return Number.isFinite(x)?x.toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d}):'—'}
 function calc(e){
   const sex=e.sex||state.profile.sex;
-  const weight=num(e.weight),height=num(e.height??state.profile.height),neck=num(e.neck),hip=num(e.hip);
+  const measured=v=>v===null||v===undefined||v===''?NaN:num(v);
+  const weight=num(e.weight),height=num(e.height??state.profile.height),neck=measured(e.neck),hip=sex==='female'?measured(e.hip):NaN;
   const hasAbdomen=Object.prototype.hasOwnProperty.call(e,'abdomen');
-  const abdomen=sex==='male'?num(hasAbdomen?e.abdomen:e.waist):NaN;
-  const waist=sex==='male'&&!hasAbdomen?NaN:num(e.waist);
+  const abdomen=sex==='male'?measured(hasAbdomen?e.abdomen:e.waist):NaN;
+  const waist=sex==='male'&&!hasAbdomen?NaN:measured(e.waist);
   const bmi=weight/(height/100)**2;
   let fat=NaN;
   if(height>0&&neck>0){
@@ -210,13 +211,14 @@ function captureDraft(){
   }
 }
 function readCircumference(form,key,mode,required){
+  const label={neck:'collo',abdomen:'addome',waist:'vita',hip:'fianchi'}[key]||key;
   const raw=mode==='accurate'?[1,2,3].map(i=>form.get(key+i)):[form.get(key)];
   const present=raw.filter(v=>v!==null&&String(v).trim()!=='');
   if(!present.length&&!required)return {average:null,readings:[]};
-  if(present.length!==raw.length)throw new Error('Completa '+(mode==='accurate'?'tutte e tre le letture di ':'la misura di ')+key+'.');
+  if(present.length!==raw.length)throw new Error('Completa '+(mode==='accurate'?'tutte e tre le letture di ':'la misura di ')+label+'.');
   const values=raw.map(num);
   const min=key==='neck'?15:20,max=key==='neck'?100:250;
-  if(values.some(v=>!Number.isFinite(v)||v<min||v>max))throw new Error('Controlla le misure di '+key+'.');
+  if(values.some(v=>!Number.isFinite(v)||v<min||v>max))throw new Error('Controlla le misure di '+label+'.');
   return {average:Math.round(values.reduce((a,b)=>a+b,0)/values.length*10)/10,readings:values};
 }
 function resetCurrent(message){
