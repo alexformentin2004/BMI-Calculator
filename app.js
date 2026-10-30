@@ -202,7 +202,21 @@ function captureDraft(){
   const form=document.getElementById('measurement');
   if(!form)return;
   const f=new FormData(form);
-  draft={date:f.get('date'),sex:f.get('sex'),height:f.get('height'),weight:f.get('weight'),waist:f.get('waist'),neck:f.get('neck'),hip:f.get('hip')};
+  draft={date:f.get('date'),sex:f.get('sex'),height:f.get('height'),age:f.get('age'),weight:f.get('weight'),mode:f.get('mode')||'standard'};
+  for(const key of ['neck','abdomen','waist','hip']){
+    draft[key]=f.get(key);
+    for(let i=1;i<=3;i++)draft[key+i]=f.get(key+i);
+  }
+}
+function readCircumference(form,key,mode,required){
+  const raw=mode==='accurate'?[1,2,3].map(i=>form.get(key+i)):[form.get(key)];
+  const present=raw.filter(v=>v!==null&&String(v).trim()!=='');
+  if(!present.length&&!required)return {average:null,readings:[]};
+  if(present.length!==raw.length)throw new Error('Completa '+(mode==='accurate'?'tutte e tre le letture di ':'la misura di ')+key+'.');
+  const values=raw.map(num);
+  const min=key==='neck'?15:20,max=key==='neck'?100:250;
+  if(values.some(v=>!Number.isFinite(v)||v<min||v>max))throw new Error('Controlla le misure di '+key+'.');
+  return {average:Math.round(values.reduce((a,b)=>a+b,0)/values.length*10)/10,readings:values};
 }
 function resetCurrent(message){
   pending=null;draft=null;editing=null;tab='home';notice=message||'';
@@ -241,12 +255,10 @@ document.addEventListener('click',e=>{
   }
 });
 document.addEventListener('change',e=>{
-  if(e.target.id==='metric'){metric=e.target.value;render();
-  }else if(e.target.name==='sex'&&e.target.form?.id==='measurement'){
-    const female=e.target.value==='female',hip=document.getElementById('hip-field');
-    hip.hidden=!female;hip.querySelector('input').required=female;
-    document.getElementById('waist-label-text').textContent=female?'Circonferenza vita (cm)':'Circonferenza addome (cm)';
-    document.getElementById('measure-help').textContent=female?'Per la formula femminile misura la vita nel punto più stretto, i fianchi nel punto più ampio e il collo appena sotto la laringe.':'Per la formula maschile misura l’addome all’ombelico, rilassato, e il collo appena sotto la laringe.';
+  if(e.target.id==='metric'){
+    metric=e.target.value;render();
+  }else if((e.target.name==='sex'||e.target.name==='mode')&&e.target.form?.id==='measurement'){
+    captureDraft();render();
   }else if(e.target.id==='import-file'){
     const file=e.target.files[0];if(!file)return;
     file.text().then(t=>{
@@ -261,15 +273,35 @@ document.addEventListener('submit',e=>{
   if(e.target.id!=='measurement')return;
   e.preventDefault();
   const f=new FormData(e.target);
-  const sex=f.get('sex'),height=num(f.get('height')),weight=num(f.get('weight')),waist=num(f.get('waist')),neck=num(f.get('neck'));
-  const hip=sex==='female'?num(f.get('hip')):0;
-  const old=state.entries.find(z=>z.id===editing);
-  const x={id:editing||('m'+Date.now()),created:old?.created||Date.now(),date:f.get('date'),sex,height,weight,waist,neck,hip};
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(x.date)||!['male','female'].includes(sex)||!(height>=100&&height<=250)||!(weight>=10&&weight<=500)||!(waist>=20&&waist<=250)||!(neck>=15&&neck<=100)||sex==='male'&&waist<=neck||sex==='female'&&(!(hip>=20&&hip<=250)||waist+hip<=neck)){
-    alert('Controlla i dati e le circonferenze inserite.');return;
+  const sex=f.get('sex'),height=num(f.get('height')),age=num(f.get('age')),weight=num(f.get('weight')),mode=f.get('mode')||'standard';
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f.get('date')||'')||!['male','female'].includes(sex)||
+     !(height>=100&&height<=250)||!Number.isInteger(age)||age<18||age>120||
+     !(weight>=10&&weight<=500)||!['standard','accurate'].includes(mode)){
+    alert('Controlla data, altezza, età, sesso e peso. Il calcolatore usa i range BMI per adulti.');return;
+  }
+  let neck,abdomen,waist,hip;
+  try{
+    neck=readCircumference(f,'neck',mode,true);
+    abdomen=readCircumference(f,'abdomen',mode,sex==='male');
+    waist=readCircumference(f,'waist',mode,sex==='female');
+    hip=readCircumference(f,'hip',mode,sex==='female');
+  }catch(err){alert(err.message);return}
+  const old=state.entries.find(z=>String(z.id)===String(editing));
+  const x={
+    id:editing||('m'+Date.now()),created:old?.created||Date.now(),
+    date:f.get('date'),sex,height,age,weight,mode,
+    neck:neck.average,abdomen:sex==='male'?abdomen.average:null,
+    waist:waist.average,hip:sex==='female'?hip.average:null,
+    samples:{neck:neck.readings,abdomen:sex==='male'?abdomen.readings:[],
+      waist:waist.readings,hip:sex==='female'?hip.readings:[]}
+  };
+  if(sex==='male'&&!(x.abdomen>x.neck)||sex==='female'&&!(x.waist+x.hip>x.neck)){
+    alert('Controlla le circonferenze: la combinazione inserita non è valida per la formula.');return;
   }
   const c=calc(x);
-  if(!Number.isFinite(c.fat)||c.fat<2||c.fat>70){alert('Le misure producono una stima non plausibile: ricontrolla i valori.');return}
+  if(!Number.isFinite(c.fat)||c.fat<2||c.fat>70){
+    alert('Le misure producono una stima non plausibile: ricontrolla i valori e la posizione del metro.');return;
+  }
   draft=null;pending=x;tab='home';render();scrollTo(0,0);
 });
 render();
