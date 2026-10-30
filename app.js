@@ -270,10 +270,18 @@ function readCircumference(form,key,mode,required){
   const raw=mode==='accurate'?[1,2,3].map(i=>form.get(key+i)):[form.get(key)];
   const present=raw.filter(v=>v!==null&&String(v).trim()!=='');
   if(!present.length&&!required)return {average:null,readings:[]};
-  if(present.length!==raw.length)throw new Error('Completa '+(mode==='accurate'?'tutte e tre le letture di ':'la misura di ')+label+'.');
+  if(present.length!==raw.length){
+    const err=new Error('Completa '+(mode==='accurate'?'tutte e tre le letture di ':'la misura di ')+label+'.');
+    err.field=mode==='accurate'?key+(raw.findIndex(v=>v===null||String(v).trim()==='')+1):key;
+    throw err;
+  }
   const values=raw.map(num);
   const min=key==='neck'?15:20,max=key==='neck'?100:250;
-  if(values.some(v=>!Number.isFinite(v)||v<min||v>max))throw new Error('Controlla le misure di '+label+'.');
+  const invalid=values.findIndex(v=>!Number.isFinite(v)||v<min||v>max);
+  if(invalid>=0){
+    const err=new Error('Controlla le misure di '+label+'.');
+    err.field=mode==='accurate'?key+(invalid+1):key;throw err;
+  }
   return {average:Math.round(values.reduce((a,b)=>a+b,0)/values.length*10)/10,readings:values};
 }
 let dialogAction=null, dialogReturnFocus=null, toastSequence=0, focusedInput=null;
@@ -383,18 +391,36 @@ function resetCurrent(message){
   render();scrollTo(0,0);if(message)toast(message);
 }
 document.addEventListener('click',e=>{
-  const b=e.target.closest('[data-tab],[data-edit],[data-delete],[data-period],[data-action]');
+  const b=e.target.closest('[data-tab],[data-edit],[data-delete],[data-period],[data-action],[data-keyboard],[data-modal],[data-toast-close]');
   if(!b)return;
+  if(b.dataset.modal){
+    const action=b.dataset.modal==='confirm'?dialogAction:null;
+    closeConfirmation();if(action)action();return;
+  }
+  if(b.hasAttribute('data-toast-close')){
+    const host=document.getElementById('toast-host');if(host)host.innerHTML='';
+    toastSequence++;return;
+  }
+  if(b.dataset.keyboard){
+    if(b.dataset.keyboard==='done'){focusedInput?.blur();keyboardState(false);}
+    else navigateNumber(b.dataset.keyboard==='previous'?-1:1);
+    return;
+  }
   if(b.dataset.tab){
     if(tab==='home')captureDraft();
     tab=b.dataset.tab;render();scrollTo(0,0);
   }else if(b.dataset.edit){
     pending=null;draft=null;editing=b.dataset.edit;tab='home';render();scrollTo(0,0);
   }else if(b.dataset.delete){
-    if(confirm('Eliminare definitivamente questa misurazione?')){
-      state.entries=state.entries.filter(x=>String(x.id)!==b.dataset.delete);
-      save();render();
-    }
+    const id=b.dataset.delete;
+    askConfirmation({
+      title:'Eliminare questa misurazione?',
+      message:'La misurazione verrà eliminata definitivamente dall’archivio e dalle statistiche. Questa operazione non può essere annullata.',
+      confirmText:'Elimina',danger:true
+    },()=>{
+      state.entries=state.entries.filter(x=>String(x.id)!==id);
+      save();render();toast('Misurazione eliminata dall’archivio.');
+    });
   }else if(b.dataset.period){period=b.dataset.period;render();
   }else if(b.dataset.action==='new'){resetCurrent('');
   }else if(b.dataset.action==='revise'){
@@ -410,6 +436,7 @@ document.addEventListener('click',e=>{
   }else if(b.dataset.action==='export'){
     const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download='bodytrack-backup-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('Backup JSON preparato. Conservalo in un luogo sicuro.');
   }else if(b.dataset.action==='import'){
     document.getElementById('import-file')?.click();
   }
@@ -423,10 +450,23 @@ document.addEventListener('change',e=>{
     const file=e.target.files[0];if(!file)return;
     file.text().then(t=>{
       const v=JSON.parse(t);
-      if(!Array.isArray(v.entries)||!confirm('Sostituire tutti i dati archiviati con questo backup?'))return;
-      state={profile:v.profile||{},entries:v.entries};
-      save();pending=null;draft=null;editing=null;tab='archive';render();
-    }).catch(()=>alert('Backup non valido'));
+      if(!v||!Array.isArray(v.entries)||!v.entries.every(e=>e&&typeof e==='object'&&
+        typeof e.date==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(e.date)&&
+        (typeof e.id==='string'||typeof e.id==='number')&&Number.isFinite(num(e.weight)))||
+        (v.profile!==undefined&&(!v.profile||typeof v.profile!=='object'||Array.isArray(v.profile)))){
+        throw new Error('Il file non contiene un archivio BodyTrack valido.');
+      }
+      askConfirmation({
+        title:'Importare questo backup?',
+        message:'Il backup contiene '+v.entries.length+' misurazioni. Sostituirà tutte le '+state.entries.length+' misurazioni attualmente archiviate su questo dispositivo.',
+        confirmText:'Sostituisci archivio',danger:true
+      },()=>{
+        state={profile:v.profile||{},entries:v.entries};
+        save();pending=null;draft=null;editing=null;tab='archive';render();
+        toast('Backup importato: '+v.entries.length+' misurazioni disponibili.');
+      });
+    }).catch(err=>toast(err.message==='Il file non contiene un archivio BodyTrack valido.'?err.message:'Impossibile leggere il backup JSON.','error'))
+      .finally(()=>{e.target.value='';});
   }
 });
 document.addEventListener('submit',e=>{
@@ -434,18 +474,19 @@ document.addEventListener('submit',e=>{
   e.preventDefault();
   const f=new FormData(e.target);
   const sex=f.get('sex'),height=num(f.get('height')),age=num(f.get('age')),weight=num(f.get('weight')),mode=f.get('mode')||'standard';
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(f.get('date')||'')||!['male','female'].includes(sex)||
-     !(height>=100&&height<=250)||!Number.isInteger(age)||age<18||age>120||
-     !(weight>=10&&weight<=500)||!['standard','accurate'].includes(mode)){
-    alert('Controlla data, altezza, età, sesso e peso. Il calcolatore usa i range BMI per adulti.');return;
-  }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f.get('date')||''))return formError('Inserisci una data valida.','date');
+  if(!(height>=100&&height<=250))return formError('Inserisci un’altezza tra 100 e 250 cm.','height');
+  if(!Number.isInteger(age)||age<18||age>120)return formError('Inserisci un’età adulta tra 18 e 120 anni.','age');
+  if(!['male','female'].includes(sex))return formError('Seleziona il sesso usato per la formula.','sex');
+  if(!(weight>=10&&weight<=500))return formError('Inserisci un peso tra 10 e 500 kg.','weight');
+  if(!['standard','accurate'].includes(mode))return formError('Seleziona una modalità di misurazione.');
   let neck,abdomen,waist,hip;
   try{
     neck=readCircumference(f,'neck',mode,true);
     abdomen=readCircumference(f,'abdomen',mode,sex==='male');
     waist=readCircumference(f,'waist',mode,sex==='female');
     hip=readCircumference(f,'hip',mode,sex==='female');
-  }catch(err){alert(err.message);return}
+  }catch(err){formError(err.message,err.field);return}
   const old=state.entries.find(z=>String(z.id)===String(editing));
   const x={
     id:editing||('m'+Date.now()),created:old?.created||Date.now(),
@@ -456,11 +497,11 @@ document.addEventListener('submit',e=>{
       waist:waist.readings,hip:sex==='female'?hip.readings:[]}
   };
   if(sex==='male'&&!(x.abdomen>x.neck)||sex==='female'&&!(x.waist+x.hip>x.neck)){
-    alert('Controlla le circonferenze: la combinazione inserita non è valida per la formula.');return;
+    formError('Controlla le circonferenze: la combinazione inserita non è valida per la formula.',sex==='male'?'abdomen'+(mode==='accurate'?'1':''):'waist'+(mode==='accurate'?'1':''));return;
   }
   const c=calc(x);
   if(!Number.isFinite(c.fat)||c.fat<2||c.fat>70){
-    alert('Le misure producono una stima non plausibile: ricontrolla i valori e la posizione del metro.');return;
+    formError('La stima non è plausibile: ricontrolla le misure e la posizione del metro.','neck'+(mode==='accurate'?'1':''));return;
   }
   draft=null;pending=x;tab='home';render();scrollTo(0,0);
 });
